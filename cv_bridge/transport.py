@@ -60,14 +60,19 @@ class ObservationTransport:
                 sys.stdout.write(json.dumps(obs) + "\n")
             sys.stdout.flush()
 
-        # 3. HTTP Delivery to JUNCTION API
+        # 3. HTTP Delivery to JUNCTION API (Spring Boot backend)
         http_status = None
         if self.http_url:
             try:
+                headers = {"Content-Type": "application/json"}
+                secret = os.environ.get("JUNCTION_EDGE_DEVICE_SECRET")
+                if secret:
+                    headers["Authorization"] = f"Bearer {secret}"
+
                 response = requests.post(
                     self.http_url,
                     json={"observations": observations},
-                    headers={"Content-Type": "application/json"},
+                    headers=headers,
                     timeout=self.timeout_seconds,
                 )
                 http_status = response.status_code

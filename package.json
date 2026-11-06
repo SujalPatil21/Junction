@@ -1,44 +1,27 @@
 {
-  "name": "junction-app",
-  "version": "0.1.0",
+  "name": "junction-monorepo",
+  "version": "1.0.0",
   "private": true,
+  "description": "JUNCTION — Intelligent Destination Orchestration Platform Monorepo",
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
-    "start": "next start",
-    "test:input": "tsx scripts/test-input-system.ts",
-    "test:full": "tsx scripts/test-full-system.ts",
-    "postinstall": "node -e \"const fs=require('fs'); const path=require('path'); const src=path.join('node_modules','cesium','Build','Cesium'); const dest=path.join('public','cesium'); if(fs.existsSync(src)){fs.mkdirSync(dest,{recursive:true}); fs.cpSync(src,dest,{recursive:true});}\""
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev",
+    "build": "npm --prefix frontend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "cd backend && mvn clean package -DskipTests",
+    "test:full": "tsx scripts/testing/test-full-system.ts",
+    "test:input": "tsx scripts/testing/test-input-system.ts",
+    "test:cv": "pytest cv_bridge/tests -v",
+    "test:backend": "cd backend && mvn test",
+    "generate:qr": "node scripts/utilities/generate_qr.js"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.9.7",
-    "@types/cesium": "^1.67.14",
-    "@types/leaflet": "^1.9.22",
-    "@types/pg": "^8.23.1",
-    "cesium": "^1.145.0",
+    "@types/node": "^20",
     "dotenv": "^18.0.4",
-    "drizzle-kit": "^0.31.11",
-    "drizzle-orm": "^0.45.3",
-    "framer-motion": "^13.2.0",
-    "leaflet": "^1.9.4",
-    "lucide-react": "^1.41.0",
-    "maplibre-gl": "^5.1.0",
-    "next": "16.3.4",
-    "pg": "^8.23.0",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "react-is": "^19.2.8",
-    "react-leaflet": "^5.0.0",
-    "recharts": "^3.10.1",
-    "three": "^0.174.0",
-    "zustand": "^5.0.3"
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
-    "@types/maplibre-gl": "^1.14.0",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@types/three": "^0.174.0",
+    "tsx": "^4.19.0",
     "typescript": "^5"
   }
 }

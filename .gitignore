@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+*/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,11 +13,26 @@
 
 # testing
 /coverage
+.pytest_cache/
 
 # next.js
-/.next/
+.next/
+frontend/.next/
 /out/
 /public/cesium/
+frontend/public/cesium/
+
+# java / spring
+backend/target/
+*.class
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
 
 # production
 /build
@@ -31,8 +47,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env*.local
+frontend/.env
+backend/.env
 
 # vercel
 .vercel
@@ -40,10 +59,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+frontend/next-env.d.ts
+
 # flutter build & cache
+mobile/attendee_flutter_app/build/
+mobile/attendee_flutter_app/.dart_tool/
+mobile/attendee_flutter_app/.flutter-plugins-dependencies
+mobile/attendee_flutter_app/.idea/
 attendee_flutter_app/build/
 attendee_flutter_app/.dart_tool/
-attendee_flutter_app/.flutter-plugins-dependencies
-attendee_flutter_app/.idea/
-.rocketride/
-

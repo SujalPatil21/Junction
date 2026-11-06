@@ -28,10 +28,16 @@ def resolve_model_path(model_arg: Optional[str] = None) -> str:
     Resolves YOLOv12 model path with strict fallback order:
     1. Explicit model_arg passed via CLI or function parameter
     2. Environment variable 'JUNCTION_YOLO_MODEL'
-    3. Documented default path: <PROJECT_ROOT>/models/yolo/yolov12n.pt
+    3. Documented default path: cv_bridge/models/yolov12n.pt or models/yolov12n.pt
     """
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    default_model = os.path.join(project_root, "models", "yolo", "yolov12n.pt")
+    cv_models = os.path.abspath(os.path.join(os.path.dirname(__file__), "models"))
+    default_candidates = [
+        os.path.join(cv_models, "yolov12n.pt"),
+        os.path.join(cv_models, "yolo", "yolov12n.pt"),
+        os.path.join(project_root, "models", "yolov12n.pt"),
+        os.path.join(project_root, "models", "yolo", "yolov12n.pt"),
+    ]
 
     if model_arg and model_arg.strip():
         candidate = os.path.abspath(model_arg) if not os.path.isabs(model_arg) else model_arg
@@ -41,13 +47,13 @@ def resolve_model_path(model_arg: Optional[str] = None) -> str:
         candidate = os.path.abspath(env_val) if not os.path.isabs(env_val) else env_val
         source = f"environment variable JUNCTION_YOLO_MODEL ('{env_val}')"
     else:
-        candidate = default_model
-        source = f"default path ('models/yolo/yolov12n.pt')"
+        candidate = next((c for c in default_candidates if os.path.exists(c)), default_candidates[0])
+        source = f"default path ('{os.path.basename(candidate)}')"
 
     if not os.path.exists(candidate):
         raise FileNotFoundError(
             f"YOLO model weights not found at '{candidate}' (selected via {source}).\n"
-            f"Please place 'yolov12n.pt' or 'yolov12m.pt' into 'models/yolo/' or specify a valid model via --model."
+            f"Please place 'yolov12n.pt' or 'yolov12m.pt' into 'cv_bridge/models/' or specify a valid model via --model."
         )
 
     print(f"[*] Resolved YOLO model: '{os.path.basename(candidate)}' ({source}) -> {candidate}")

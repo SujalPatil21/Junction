@@ -1,0 +1,87 @@
+# ============================================================
+#  application-prod.yml — Production Profile (Railway / Docker)
+#  Extends application.yml — settings here override defaults.
+#
+#  All secrets MUST be injected as environment variables.
+#  Never commit real values here.
+# ============================================================
+
+spring:
+  # ── DataSource (Railway PostgreSQL) ───────────────────────
+  datasource:
+    # Railway injects DATABASE_URL in jdbc format automatically
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: junction-hikari-prod
+      maximum-pool-size: 10
+      minimum-idle: 3
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      # Leak detection threshold (30s) — alerts on slow queries holding connections
+      leak-detection-threshold: 30000
+
+  # ── JPA — no SQL logging in production ────────────────────
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  # ── Flyway — NEVER baseline in production automatically ───
+  flyway:
+    baseline-on-migrate: false
+    # To baseline existing DB, run manually:
+    # mvn flyway:baseline -Dflyway.url=$DATABASE_URL -Dflyway.user=$DATABASE_USERNAME -Dflyway.password=$DATABASE_PASSWORD
+
+# ── Server — production hardening ─────────────────────────
+server:
+  port: ${PORT:8080}
+  # Tomcat forward headers (Railway / Railway proxies)
+  forward-headers-strategy: framework
+
+# ── Logging — structured JSON in production ───────────────
+logging:
+  level:
+    root: WARN
+    com.junction: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO
+  pattern:
+    console: '{"timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%level","logger":"%logger{36}","thread":"%thread","message":"%msg"}%n'
+
+# ── Actuator — restrict in production ─────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
+
+# ── Junction Production Settings ──────────────────────────
+junction:
+  cors:
+    # Comma-separated list of allowed origins — set via env var
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  security:
+    clerk:
+      jwks-uri: ${CLERK_JWKS_URI}
+      issuer-uri: ${CLERK_ISSUER_URI}
+    edge-device:
+      secret: ${JUNCTION_EDGE_DEVICE_SECRET}
+
+# ── SpringDoc — disable Swagger UI in production ──────────
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+

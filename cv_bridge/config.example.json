@@ -2,7 +2,7 @@
   "cameraId": "DEV_CCTV_WANKHEDE_01",
   "zoneId": "ZONE_WANKHEDE",
   "resourceId": "WANKHEDE_EXIT",
-  "modelPath": "./models/yolo/yolov12n.pt",
+  "modelPath": "./cv_bridge/models/yolov12n.pt",
   "confidenceThreshold": 0.3,
   "device": "cpu",
   "frameStride": 2,
@@ -15,7 +15,7 @@
     "inboundVector": "DOWN",
     "minMovementPixels": 15
   },
-  "junctionApiUrl": "http://localhost:3000/api/observations",
+  "junctionApiUrl": "http://localhost:8080/api/observations",
   "emitJsonlPath": "./artifacts/cctv_observations.jsonl",
   "outputVideoPath": "./artifacts/annotated_cctv.mp4"
 }

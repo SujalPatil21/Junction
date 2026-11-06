@@ -18,7 +18,7 @@ jobs:
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: public/junction-attendee.apk
+          files: frontend/public/junction-attendee.apk
           name: Junction Attendee App ${{ github.ref_name }}
           draft: false
           prerelease: false

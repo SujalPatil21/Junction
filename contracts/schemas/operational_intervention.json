@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OperationalIntervention",
+  "type": "object",
+  "required": ["id", "type", "title", "targetZoneId", "status", "rationale"],
+  "properties": {
+    "id": { "type": "string" },
+    "type": { "type": "string" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "targetZoneId": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["PROPOSED", "APPROVED", "REJECTED", "EXECUTED"]
+    },
+    "urgency": {
+      "type": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    },
+    "requiresApproval": { "type": "boolean" },
+    "approvalRoleRequired": { "type": "string" },
+    "rationale": { "type": "string" },
+    "confidenceScore": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}
+

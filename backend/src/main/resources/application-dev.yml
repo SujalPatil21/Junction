@@ -1,0 +1,77 @@
+# ============================================================
+#  application-dev.yml — Local Development Profile
+#  Extends application.yml — settings here override defaults.
+# ============================================================
+
+spring:
+  # ── DataSource (local PostgreSQL or Testcontainers) ────────
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/junction_dev}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: junction-hikari-dev
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+
+  # ── JPA — show SQL in dev ──────────────────────────────────
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # ── Flyway — allow baseline on fresh local DB ───────────────
+  flyway:
+    baseline-on-migrate: false
+
+# ── Logging — verbose in dev ─────────────────────────────────
+logging:
+  level:
+    com.junction: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    org.flywaydb: DEBUG
+
+# ── Actuator — expose all endpoints in dev ───────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+
+# ── Junction Dev Overrides ────────────────────────────────────
+junction:
+  cors:
+    allowed-origins: "http://localhost:3000,http://localhost:3001"
+  security:
+    clerk:
+      jwks-uri: ${CLERK_JWKS_URI:https://dev-placeholder.clerk.accounts.dev/.well-known/jwks.json}
+      issuer-uri: ${CLERK_ISSUER_URI:https://dev-placeholder.clerk.accounts.dev}
+    edge-device:
+      secret: ${JUNCTION_EDGE_DEVICE_SECRET:dev-local-secret-not-for-production}
+
+# ── SpringDoc — enable Swagger UI in dev ─────────────────────
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  show-actuator: false
+  default-produces-media-type: application/json
+

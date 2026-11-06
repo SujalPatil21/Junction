@@ -1,0 +1,416 @@
+openapi: 3.0.3
+info:
+  title: JUNCTION API
+  description: Canonical OpenAPI 3.0 specification for the JUNCTION Intelligent Destination Orchestration Platform backend.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local Spring Boot Backend
+  - url: https://junction-backend.up.railway.app
+    description: Production Deployment
+
+paths:
+  /api/health:
+    get:
+      summary: Service health check
+      description: Public endpoint returning backend service health status.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: junction-backend
+                  version:
+                    type: string
+                    example: 1.0.0
+                  environment:
+                    type: string
+                    example: prod
+                  timestamp:
+                    type: string
+                    example: '2026-11-06T17:00:00Z'
+
+  /api/scenarios:
+    get:
+      summary: Get all scenarios and active scenario
+      responses:
+        '200':
+          description: List of scenarios
+    post:
+      summary: Set active scenario
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - scenarioId
+              properties:
+                scenarioId:
+                  type: string
+                  example: POST_EVENT_SURGE
+      responses:
+        '200':
+          description: Scenario changed
+        '403':
+          description: Forbidden (Organizer role required)
+
+  /api/observations:
+    post:
+      summary: Ingest batch of normalized observations
+      security:
+        - EdgeDeviceAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchIngestionRequest'
+      responses:
+        '200':
+          description: Ingestion result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchIngestionResponse'
+    get:
+      summary: Get recent observation buffer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zoneId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of recent observations
+
+  /api/zones:
+    get:
+      summary: Get all zone fused states
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of fused zone states
+
+  /api/zones/{zoneId}:
+    get:
+      summary: Get fused state for a specific zone
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fused zone state
+        '404':
+          description: Zone not found
+
+  /api/zones/coverage:
+    get:
+      summary: Get data honesty coverage profiles
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Coverage profiles map
+
+  /api/recommendations:
+    get:
+      summary: Get all recommendations
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of recommendations
+
+  /api/recommendations/generate:
+    post:
+      summary: Evaluate thresholds and generate recommendations
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Generated recommendations
+
+  /api/recommendations/{id}/approve:
+    post:
+      summary: Approve recommendation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Approved recommendation
+        '403':
+          description: Forbidden (Organizer required)
+
+  /api/recommendations/{id}/reject:
+    post:
+      summary: Reject recommendation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rejected recommendation
+        '403':
+          description: Forbidden (Organizer required)
+
+  /api/recommendations/{id}/execute:
+    post:
+      summary: Execute recommendation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Executed recommendation
+        '422':
+          description: Invalid state transition (cannot execute unapproved)
+        '403':
+          description: Forbidden (Organizer required)
+
+  /api/routing:
+    get:
+      summary: Calculate route between coordinates
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: startLat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: startLng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: endLat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: endLng
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Route calculation result
+    post:
+      summary: Calculate route between coordinates
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - start
+                - end
+              properties:
+                start:
+                  $ref: '#/components/schemas/GeoLocation'
+                end:
+                  $ref: '#/components/schemas/GeoLocation'
+      responses:
+        '200':
+          description: Route calculation result
+
+  /api/forecast:
+    get:
+      summary: Get crowd surge forecasts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of forecasts
+
+  /api/devices:
+    get:
+      summary: Get registered devices
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of devices
+
+  /api/restaurants:
+    get:
+      summary: Get active restaurants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zone
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of restaurants
+    post:
+      summary: Create restaurant
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Created restaurant
+        '403':
+          description: Forbidden (Organizer required)
+
+  /api/restaurants/{id}/inventory:
+    post:
+      summary: Record restaurant inventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Updated restaurant
+
+  /api/audit:
+    get:
+      summary: Get audit trail
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of audit records
+        '403':
+          description: Forbidden (Organizer required)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Clerk-issued RS256 JWT
+    EdgeDeviceAuth:
+      type: http
+      scheme: bearer
+      description: Static shared secret for edge device observation ingestion
+
+  schemas:
+    GeoLocation:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          example: 18.9389
+        longitude:
+          type: number
+          example: 72.8258
+
+    NormalizedObservation:
+      type: object
+      required:
+        - id
+        - sourceId
+        - zoneId
+        - value
+      properties:
+        id:
+          type: string
+          example: OBS_001
+        sourceId:
+          type: string
+          example: DEV_CCTV_WANKHEDE_01
+        zoneId:
+          type: string
+          example: ZONE_WANKHEDE
+        resourceId:
+          type: string
+          example: WANKHEDE_EXIT
+        metricType:
+          type: string
+          example: CROWD_COUNT
+        value:
+          type: number
+          example: 1240
+        unit:
+          type: string
+          example: persons
+        confidence:
+          type: number
+          example: 0.92
+        qualityStatus:
+          type: string
+          example: FRESH
+        observedAt:
+          type: string
+          example: '2026-11-06T17:00:00Z'
+
+    BatchIngestionRequest:
+      type: object
+      required:
+        - observations
+      properties:
+        observations:
+          type: array
+          items:
+            $ref: '#/components/schemas/NormalizedObservation'
+
+    BatchIngestionResponse:
+      type: object
+      properties:
+        acceptedCount:
+          type: integer
+          example: 1
+        quarantinedCount:
+          type: integer
+          example: 0
+        deduplicatedCount:
+          type: integer
+          example: 0
+        accepted:
+          type: array
+          items:
+            $ref: '#/components/schemas/NormalizedObservation'
+
