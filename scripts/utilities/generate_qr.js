@@ -21,8 +21,7 @@ qrcode.toString(directRawUrl, { type: 'terminal', small: true }, (err, qrText) =
 });
 
 // 2. Save High-Res PNG image for README
-const frontendPublic = path.resolve(__dirname, '..', '..', 'frontend', 'public');
-const outputPng = path.join(frontendPublic, 'junction-qr.png');
+const outputPng = path.join(__dirname, 'public', 'junction-qr.png');
 qrcode.toFile(outputPng, directRawUrl, {
   width: 500,
   margin: 2,
@@ -32,6 +31,6 @@ qrcode.toFile(outputPng, directRawUrl, {
   },
 }, (err) => {
   if (!err) {
-    console.log(`\x1b[90m✓ High-Res QR code saved to: frontend/public/junction-qr.png\x1b[0m\n`);
+    console.log(`\x1b[90m✓ High-Res QR code saved to: public/junction-qr.png\x1b[0m\n`);
   }
 });
