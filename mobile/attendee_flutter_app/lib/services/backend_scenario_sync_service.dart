@@ -24,17 +24,12 @@ class BackendScenarioSyncService {
   BackendScenarioSyncService._internal();
 
   // Potential backend host URLs for Physical Android Device, Emulator, Desktop, LAN
-  // Prioritizes Spring Boot port 8080, with Next.js port 3000 as backward-compatible fallback
+  // Strictly targets Spring Boot backend (port 8080)
   final List<String> _candidateBaseUrls = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
     "http://10.0.2.2:8080",
     "http://192.168.90.169:8080",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://192.168.90.169:3000",
-    "http://10.0.2.2:3000",
-    "http://192.168.137.84:3000",
   ];
 
   String? _workingBaseUrl;
@@ -55,10 +50,8 @@ class BackendScenarioSyncService {
     // 2. Default Spring Boot Backend URLs (Port 8080)
     if (!urls.contains("http://localhost:8080")) urls.add("http://localhost:8080");
     if (!urls.contains("http://127.0.0.1:8080")) urls.add("http://127.0.0.1:8080");
-
-    // 3. Fallback to Next.js Backend URLs (Port 3000)
-    if (!urls.contains("http://localhost:3000")) urls.add("http://localhost:3000");
-    if (!urls.contains("http://127.0.0.1:3000")) urls.add("http://127.0.0.1:3000");
+    if (!urls.contains("http://10.0.2.2:8080")) urls.add("http://10.0.2.2:8080");
+    if (!urls.contains("http://192.168.90.169:8080")) urls.add("http://192.168.90.169:8080");
 
     // 4. Web origin fallback if running on Web
     if (kIsWeb) {

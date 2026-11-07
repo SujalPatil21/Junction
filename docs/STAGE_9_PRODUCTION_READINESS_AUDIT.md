@@ -149,21 +149,23 @@ mvn -f backend/pom.xml clean verify
 * **Skipped:** 0
 * **Total Execution Time:** 58.1 s
 
-### Breakdown by Test Suite:
+### Breakdown by Test Suite (Reconciled: Exactly 15 Test Classes, 61 Tests Total):
 1. `ClerkJwtAuthenticationConverterTest` (4 tests) — DB role resolution, forged token prevention.
 2. `ComprehensiveSecurityAndApiControllerTest` (21 tests) — Public access, 401 unauthenticated calls, edge device bearer auth, RBAC (Organizer vs Attendee), partner scoping, `/api/auth/me`.
-3. `JpaRepositoryIntegrationTest` (5 tests) — Profile, Restaurant, RestaurantMembership, AuditEvent, OperationalIntervention entities.
-4. `DeviceRegistryServiceTest` (2 tests) — Multi-sensor network initialization and zone queries.
-5. `ForecastingServiceTest` (2 tests) — 15/30/45/60 min prediction horizons, threshold crossing.
-6. `HospitalityDemandServiceTest` (2 tests) — Outflow demand propagation, surge thresholds.
-7. `HotspotAndCascadeServiceTest` (2 tests) — Hotspot detection (pressure >= 75), cascade propagation.
-8. `IngestionPipelineServiceTest` (4 tests) — Observation normalization, deduplication, quarantine.
-9. `RecommendationLifecycleServiceTest` (3 tests) — Generation, approval, execution lifecycle.
-10. `RestaurantServiceTest` (4 tests) — Scoped partner inventory, organizer override, 403 on unassigned restaurant.
-11. `RoutingServiceTest` (2 tests) — Haversine distance, travel time, null validation.
-12. `ScenarioServiceTest` (3 tests) — Scenario initialization, active scenario state transitions.
-13. `SensorFusionServiceTest` (3 tests) — Fused occupancy across 7 zones, stale penalty, fresh observation.
-14. `ZoneRegistryServiceTest` (3 tests) — 7 canonical zones, coverage profiles, operational intervention gating.
+3. `HealthControllerTest` (1 test) — Public `/api/health` status and service metadata.
+4. `JpaRepositoryIntegrationTest` (5 tests) — Profile, Restaurant, RestaurantMembership, AuditEvent, OperationalIntervention entities.
+5. `DeviceRegistryServiceTest` (2 tests) — Multi-sensor network initialization and zone queries.
+6. `ForecastingServiceTest` (2 tests) — 15/30/45/60 min prediction horizons, threshold crossing.
+7. `HospitalityDemandServiceTest` (2 tests) — Outflow demand propagation, surge thresholds.
+8. `HotspotAndCascadeServiceTest` (2 tests) — Hotspot detection (pressure >= 75), cascade propagation.
+9. `IngestionPipelineServiceTest` (4 tests) — Observation normalization, deduplication, quarantine.
+10. `RecommendationLifecycleServiceTest` (3 tests) — Generation, approval, execution lifecycle.
+11. `RestaurantServiceTest` (4 tests) — Scoped partner inventory, organizer override, 403 on unassigned restaurant.
+12. `RoutingServiceTest` (2 tests) — Haversine distance, travel time, null validation.
+13. `ScenarioServiceTest` (3 tests) — Scenario initialization, active scenario state transitions.
+14. `SensorFusionServiceTest` (3 tests) — Fused occupancy across 7 zones, stale penalty, fresh observation.
+15. `ZoneRegistryServiceTest` (3 tests) — 7 canonical zones, coverage profiles, operational intervention gating.
+* **Sum Total:** 4 + 21 + 1 + 5 + 2 + 2 + 2 + 2 + 4 + 3 + 4 + 2 + 3 + 3 + 3 = **61 Tests across 15 Classes**. Failures: 0, Errors: 0, Skipped: 0.
 
 ---
 
