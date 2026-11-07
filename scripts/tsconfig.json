@@ -11,15 +11,15 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": ".",
+    "baseUrl": "..",
     "paths": {
-      "@/*": ["./frontend/src/*"]
+      "@/*": ["frontend/src/*"]
     }
   },
   "include": [
-    "frontend/src/**/*",
-    "scripts/**/*"
+    "../frontend/src/**/*",
+    "./**/*"
   ],
-  "exclude": ["node_modules", "frontend/node_modules"]
+  "exclude": ["../node_modules", "../frontend/node_modules"]
 }
 

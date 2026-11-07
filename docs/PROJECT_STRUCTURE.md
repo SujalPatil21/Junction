@@ -104,15 +104,18 @@ Junction-App/
 
 ## 3. Monorepo Root Directory Verification
 
-The root directory contains strictly repository-level configuration:
-- `.gitignore`
-- `README.md`
-- `MIGRATION_LOG.md`
-- `PROJECT_STRUCTURE.md`
-- `package.json` (root orchestration scripts)
-- `tsconfig.json` (monorepo path mapping)
-- `railway.json` (Railway container config pointing to `frontend/Dockerfile`)
-- `pytest.ini` (root pytest configuration)
-- `.github/` (CI/CD workflows)
-- `.rocketride/` (102 tool schemas)
-- `.claude/`
+Following the final root directory cleanup, the root directory contains exclusively repository-level orchestration and configuration:
+- `.gitignore` — Global ignore rules for caches, node_modules, build outputs, and credentials
+- `README.md` — Authoritative project orientation and quickstart guide
+- `package.json` — Monorepo orchestration scripts (`dev:frontend`, `build`, `test:full`, `test:input`, `test:cv`, `test:backend`)
+- `package-lock.json` — Lockfile for monorepo development tooling
+- `.github/` — Continuous integration workflows (e.g. `release.yml`)
+- `.rocketride/` — 102 microservice tool schemas and catalog
+- `.claude/` — IDE and AI workspace configuration
+
+All subsystem-specific configuration files have been decentralized to their respective modules:
+- Frontend configuration (`tsconfig.json`, `railway.json`, `next.config.ts`) → `frontend/`
+- Backend configuration (`pom.xml`, `railway.json`, `application.yml`) → `backend/`
+- CV configuration (`pytest.ini`, `requirements.txt`) → `cv_bridge/`
+- Script TypeScript configuration (`tsconfig.json`) → `scripts/`
+- Architectural specifications & audit reports → `docs/`
