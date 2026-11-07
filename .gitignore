@@ -77,3 +77,8 @@ cv_bridge/artifacts/annotated-videos/*.mp4
 !cv_bridge/artifacts/annotated-videos/annotated_staging.mp4
 !cv_bridge/artifacts/annotated-videos/annotated_venue_entrance_validation.mp4
 cv_bridge/artifacts/observations/*.tmp
+
+# AI coding assistant configurations
+.claude/
+.rocketride/
+rocketride/
