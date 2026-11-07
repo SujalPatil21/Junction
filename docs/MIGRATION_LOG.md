@@ -19,6 +19,7 @@
 | 4.0.0 | 2026-11-06 | Stage 4 — Complete Spring Boot API: 10 REST Controllers, canonical OpenAPI specification `contracts/openapi.yaml` |
 | 5.0.0 | 2026-11-06 | Stage 5 & 6 — Decoupling: Python CV Bridge Bearer auth, Flutter multi-host port 8080 sync, Next.js typed API client |
 | 6.0.0 | 2026-11-06 | Stage 7 — Complete Physical Repository Restructuring: Monorepo established, zero path breakages, all tests passed |
+| 7.0.0 | 2026-11-07 | Stage 8 — Upstream Junction-P Feature Integration & Mainline Merge: 3D Stadium Twin, Weather Twin, NUGEN, 9-Ch CCTV, Spring Boot Plan Engine |
 
 ---
 
@@ -105,3 +106,81 @@
     Command: pytest cv_bridge/tests -v
     Result: 9 PASSED, 0 FAILED.
 ```
+
+---
+
+## Stage 8 — Upstream Feature Integration & Mainline Merge
+
+**Status:** ✅ COMPLETE  
+**Source Repository:** `https://github.com/NihalMishra3009/JUNCTION-P.git` (commit `198a7ba`)  
+**Integration Branch:** `integration/upstream-junction-features` (commit `9348729`)  
+**Target Main Branch:** `main` (merge commit `9d103a6`)  
+
+### Integrated Capabilities & Architectural Preservation
+
+1. **3D Stadium Digital Twin (`HoloJiStadiumTwin`)**:
+   - Complete Three.js / React Three Fiber Wankhede Stadium model (`frontend/src/components/organizer/stadium/`, asset `wankhede_stadium.glb` at 8.99 MB).
+   - Dedicated routes `/organizer/stadium`, `/organizer/stadium-preview`, and selector `/organizer/select`.
+   - Dynamic crowd particle flows, stand capacity heatmaps, camera rig animations, and live telemetry overlay.
+
+2. **Weather Digital Twin**:
+   - Live meteorological forecasting engine (`frontend/src/services/weatherService.ts`, `weatherImpactModel.ts`, `docs/WEATHER_TWIN_SETUP.md`) using Open-Meteo.
+   - Dynamic weather impact simulation in `/organizer/simulation` (rain friction coefficient, transit speed modifiers, concourse pressure alerts).
+
+3. **NUGEN Domain Intelligence**:
+   - Task 2 benchmark alignment engine (`frontend/src/services/nugenService.ts`, `NugenDomainIntelligenceCard.tsx`, benchmark datasets in `docs/`).
+   - Resilient fallback execution ensuring organizer dashboard stability.
+
+4. **9-Channel Synchronized CCTV System**:
+   - 9 neutral test video streams (`CCTV-01` to `CCTV-09`) in `frontend/public/videos/`.
+   - Synchronized 3x3 video wall and focus mode with 60 FPS ByteTrack trajectory overlay.
+
+5. **Authoritative Spring Boot Backend Ownership**:
+   - Added `RecommendationController.planRecommendations` (`POST /api/recommendations/plan`) directly in Spring Boot (`backend/src/main/java/com/junction/controller/RecommendationController.java`).
+   - Added `WeatherController` (`GET /api/weather`, `GET /api/social-signals`) and `NugenController` (`POST /api/nugen/intelligence`).
+   - Spring Security configuration (`SecurityConfig.java`) updated with public permits for weather, social signals, and planning endpoints while strictly maintaining Clerk JWT role guards.
+
+### Stage 8 Acceptance Gate Verification
+
+```
+[✓] Next.js Production Build:
+    Command: npm --prefix frontend run build
+    Result: 24/24 static/dynamic routes compiled successfully (0 errors).
+
+[✓] Spring Boot Backend Tests:
+    Command: mvn -f backend/pom.xml test
+    Result: 67 tests run, 0 failures, 0 errors.
+
+[✓] Master System Verification Suite:
+    Command: npm run test:full
+    Result: 61 PASSED, 0 FAILED.
+
+[✓] Input System & Sensor Fusion Test Suite:
+    Command: npm run test:input
+    Result: 48 PASSED, 0 FAILED.
+
+[✓] 9-Channel CCTV & Computer Vision Suite:
+    Command: npm run test:cctv
+    Result: 72 PASSED, 0 FAILED.
+
+[✓] Task 2 Nugen Domain Intelligence Alignment Suite:
+    Command: npm run test:nugen
+    Result: 17 PASSED, 0 FAILED.
+
+[✓] Recommendation -> Publish -> Attendee Flow Suite:
+    Command: npm run test:flow
+    Result: 8 PASSED, 0 FAILED.
+
+[✓] Dashboard Resilience & Contract Suite:
+    Command: npm run test:resilience
+    Result: All resilience assertions passed (0 failed).
+
+[✓] Python CV Bridge Test Suite:
+    Command: pytest -c cv_bridge/pytest.ini cv_bridge/tests -v
+    Result: 9 PASSED, 0 FAILED.
+
+[✓] Flutter Mobile App Verification:
+    Command: cd mobile/attendee_flutter_app && flutter test && dart analyze lib
+    Result: All tests passed, 0 issues found.
+```
+

@@ -129,18 +129,41 @@ Run test suites from the repository root:
 # Master System Verification Suite (61 tests)
 npm run test:full
 
-# Input System & Sensor Fusion Suite (42 tests)
+# Input System & Sensor Fusion Suite (48 tests)
 npm run test:input
+
+# 9-Channel CCTV & Computer Vision Suite (72 tests)
+npm run test:cctv
+
+# Task 2 Nugen Domain Intelligence Alignment Suite (17 tests)
+npm run test:nugen
+
+# Recommendation -> Publish -> Attendee Flow Suite (8 tests)
+npm run test:flow
+
+# Dashboard Resilience & Contract Suite
+npm run test:resilience
 
 # Computer Vision Bridge Test Suite (9 tests)
 npm run test:cv
 
-# Spring Boot Backend Unit & Integration Tests
+# Spring Boot Backend Unit & Integration Tests (67 tests)
 npm run test:backend
 
-# Next.js Frontend Production Build
+# Next.js Frontend Production Build (24 routes)
 npm run build
 ```
+
+---
+
+## 🌟 Integrated Platform Capabilities
+
+- **3D Stadium Digital Twin (`HoloJiStadiumTwin`)**: Interactive Three.js / React Three Fiber Wankhede Stadium model (`/organizer/stadium`) with particle crowd flow, stand occupancy heatmaps, seat routing, and camera rigs.
+- **Weather Digital Twin Layer**: Real-time Open-Meteo meteorological telemetry dynamically driving crowd transit speed, taxi surge, and concourse capacity thresholds in the What-If Simulator (`/organizer/simulation`).
+- **NUGEN Domain Intelligence**: Operational state evaluation aligned with Task 2 benchmark datasets and failure-isolated fallback.
+- **9-Channel Synchronized CCTV System**: Multi-feed video wall and focus mode with 60 FPS ByteTrack trajectory canvas tracking.
+- **Multi-Horizon AI Decision Planner**: Gemini-powered operational intervention recommendations with strict human-in-the-loop organizer approval.
+- **Mobile Attendee Experience**: Standalone release APK (`JUNCTION-Release.apk`) with live Spring Boot scenario synchronization, multi-emergency calling, and barcode scanning.
 
 ---
 
