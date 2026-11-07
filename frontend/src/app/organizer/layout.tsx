@@ -7,7 +7,7 @@ import styles from "./organizer.module.css";
 import { SCENARIOS } from "@/data/mockScenarios";
 import { ScenarioId } from "@/types";
 import { useState, useEffect } from "react";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useUser, useAuth, UserButton } from "@clerk/nextjs";
 import {
   LayoutDashboard,
   Map as MapIcon,
@@ -55,6 +55,8 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { activeScenario, setScenario } = useApp();
   const { user, isLoaded, isSignedIn } = useUser();
+  const { getToken } = useAuth();
+  const [dbProfile, setDbProfile] = useState<any>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Auth protection guard
@@ -63,6 +65,36 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
       router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
     }
   }, [isLoaded, isSignedIn, router, pathname]);
+
+  // Fetch authoritative authenticated profile from Spring Boot on port 8080
+  useEffect(() => {
+    let isMounted = true;
+    async function loadPostgresProfile() {
+      try {
+        const token = await getToken();
+        if (token) {
+          const res = await fetch("http://localhost:8080/api/auth/me", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (isMounted && data.profile) {
+              setDbProfile(data.profile);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load authenticated profile from Spring Boot:", err);
+      }
+    }
+
+    if (isLoaded && isSignedIn) {
+      loadPostgresProfile();
+    }
+    return () => { isMounted = false; };
+  }, [isLoaded, isSignedIn, getToken]);
 
   if (!isLoaded || !isSignedIn) {
     return (
@@ -77,7 +109,8 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
     );
   }
 
-  const userDisplayName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "City Operations Command";
+  const userDisplayName = dbProfile?.name || user?.fullName || user?.primaryEmailAddress?.emailAddress || "City Operations Command";
+  const userRole = dbProfile?.role || "ORGANIZER";
 
   return (
     <div className={styles.shell}>
@@ -167,8 +200,8 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
 
           <div className={styles.headerRight}>
             <div className={styles.headerBadges}>
-              <span className={styles.liveTag}>
-                <span className={styles.liveDot} /> LIVE TELEMETRY
+              <span className="pill pill-simulated" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 700, padding: "4px 8px" }}>
+                <span className="simulated-dot" /> SIMULATED TELEMETRY
               </span>
               <span className={styles.timeTag}>19:30–22:30</span>
             </div>
@@ -178,7 +211,7 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
                 {userDisplayName}
               </span>
               <span className={styles.userRoleTag}>
-                ORGANIZER
+                {userRole}
               </span>
             </div>
 

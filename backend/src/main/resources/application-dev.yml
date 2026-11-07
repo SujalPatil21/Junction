@@ -57,8 +57,8 @@ junction:
     allowed-origins: "http://localhost:3000,http://localhost:3001"
   security:
     clerk:
-      jwks-uri: ${CLERK_JWKS_URI:https://dev-placeholder.clerk.accounts.dev/.well-known/jwks.json}
-      issuer-uri: ${CLERK_ISSUER_URI:https://dev-placeholder.clerk.accounts.dev}
+      jwks-uri: ${CLERK_JWKS_URI:https://working-ladybird-7761.clerk.accounts.dev/.well-known/jwks.json}
+      issuer-uri: ${CLERK_ISSUER_URI:https://working-ladybird-7761.clerk.accounts.dev}
     edge-device:
       secret: ${JUNCTION_EDGE_DEVICE_SECRET:dev-local-secret-not-for-production}
 

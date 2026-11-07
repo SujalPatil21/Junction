@@ -35,7 +35,7 @@ interface Props {
 
 const MUMBAI_CENTER: [number, number] = [72.8258, 18.9388];
 
-const OPENFREEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const OPENFREEMAP_STYLE = "/map-styles/liberty.json";
 const OPENFREEMAP_PLANET = "https://tiles.openfreemap.org/planet";
 
 const BUILDING_HEIGHT: maplibregl.ExpressionSpecification = [
@@ -120,6 +120,73 @@ export default function MapLibreCommandMap({
       pitch: 58,
       bearing: -15,
       maxPitch: 85,
+      transformRequest: (url: string, resourceType?: string) => {
+        if (resourceType === "Glyphs") {
+          const match = url.match(/\/fonts\/([^/]+)\/([^/]+\.pbf)/);
+          if (match) {
+            return {
+              url: `/fonts/${match[1]}/${match[2]}`,
+            };
+          }
+        }
+        return { url };
+      },
+    });
+
+    map.on("styleimagemissing", (e) => {
+      const id = e.id;
+      if (map.hasImage(id)) return;
+
+      const size = 24;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const iconColors: Record<string, string> = {
+        office: "#3b82f6",
+        atm: "#10b981",
+        swimming_pool: "#06b6d4",
+        gate: "#f59e0b",
+        lift_gate: "#ef4444",
+        sports_center: "#8b5cf6",
+        ferry_terminal: "#0284c7",
+        bollard: "#64748b",
+      };
+
+      const iconSymbols: Record<string, string> = {
+        office: "🏢",
+        atm: "₹",
+        swimming_pool: "🏊",
+        gate: "🚪",
+        lift_gate: "🚧",
+        sports_center: "🏟",
+        ferry_terminal: "⛴",
+        bollard: "🛑",
+      };
+
+      const bg = iconColors[id] || "#38bdf8";
+      const sym = iconSymbols[id] || "•";
+
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 11px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(sym, size / 2, size / 2 + 0.5);
+
+      const imageData = ctx.getImageData(0, 0, size, size);
+      if (!map.hasImage(id)) {
+        map.addImage(id, imageData, { pixelRatio: 1 });
+      }
     });
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-left");
@@ -128,6 +195,28 @@ export default function MapLibreCommandMap({
     map.on("load", () => {
       mapRef.current = map;
       setMapReady(true);
+
+      // Configure map style to prefer clean English labels
+      const styleLayers = map.getStyle().layers ?? [];
+      styleLayers.forEach((layer) => {
+        if (layer.type === "symbol") {
+          const layout = (layer as any).layout;
+          if (layout && layout["text-field"]) {
+            const tfStr = JSON.stringify(layout["text-field"]);
+            if (tfStr.includes("name:nonlatin")) {
+              try {
+                map.setLayoutProperty(layer.id, "text-field", [
+                  "coalesce",
+                  ["get", "name:en"],
+                  ["get", "name_en"],
+                  ["get", "name:latin"],
+                  ["get", "name"],
+                ]);
+              } catch {}
+            }
+          }
+        }
+      });
 
       // Add 3D Extrusion Building Layer
       if (!map.getSource("openfreemap")) {

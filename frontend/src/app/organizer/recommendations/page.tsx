@@ -70,7 +70,7 @@ export default function RecommendationsPage() {
               <div className={styles.impactSection}>
                 <span className="text-meta">Expected Impact</span>
                 <div className={styles.impactGrid}>
-                  {rec.expectedImpact.map(imp => (
+                  {(rec.expectedImpact || []).map(imp => (
                     <div key={imp.resourceName} className={styles.impactCard}>
                       <span className={styles.impactResource}>{imp.resourceName}</span>
                       <div className={styles.impactChange}>
@@ -195,7 +195,7 @@ export default function RecommendationsPage() {
                     </div>
                     <div>
                       <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-faint)" }}>Expected Impact</span>
-                      {rec.expectedImpact.map(imp => (
+                      {(rec.expectedImpact || []).map(imp => (
                         <div key={imp.resourceName} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginTop: 4 }}>
                           <span>{imp.resourceName}</span>
                           <span style={{ fontWeight: 700, color: "var(--green)" }}>{imp.before}% → {imp.after}%</span>

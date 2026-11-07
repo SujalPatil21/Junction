@@ -436,7 +436,7 @@ export default function PredictionsPage() {
                 Expected Impact on Cascade Bottlenecks
               </span>
               <div className={styles.impactGrid}>
-                {primaryRec.expectedImpact.map(imp => (
+                {(primaryRec?.expectedImpact || []).map(imp => (
                   <div key={imp.resourceName} className={styles.impactPill}>
                     <span className={styles.impactName}>{imp.resourceName}</span>
                     <span className={styles.impactValues}>{imp.before}% → {imp.after}%</span>

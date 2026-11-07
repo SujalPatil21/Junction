@@ -241,7 +241,9 @@ export default function OrganizerDashboard() {
             <div className={styles.actionImpactBox}>
               <span className={styles.impactLabel}>EXPECTED PRESSURE IMPACT</span>
               <span className={styles.impactValue}>
-                {topRec.expectedImpact[0]?.before}% → {topRec.expectedImpact[0]?.after}%
+                {topRec.expectedImpact && topRec.expectedImpact.length > 0
+                  ? `${topRec.expectedImpact[0].before}% → ${topRec.expectedImpact[0].after}%`
+                  : "Active Relief"}
               </span>
             </div>
 

@@ -48,7 +48,7 @@ export const junctionApi = {
 
   scenarios: {
     getAll: () => request<any>("/api/scenarios"),
-    setActive: (scenarioId: string, token: string) =>
+    setActive: (scenarioId: string, token?: string) =>
       request<any>("/api/scenarios", {
         method: "POST",
         body: JSON.stringify({ scenarioId }),

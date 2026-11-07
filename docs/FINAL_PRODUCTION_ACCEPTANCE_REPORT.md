@@ -50,7 +50,7 @@ To ensure zero risk of production downtime or security exposure, the system is *
 | | Token Rejection Matrix | **PASS** | Attendee and Organizer Clerk JWTs rejected without edge secret. |
 | | Constant-Time Comparison | **PASS** | `constantTimeEquals()` prevents timing-based secret discovery. |
 | | Server-Side Secret Isolation | **PASS** | Edge secret not exposed in frontend bundle or Flutter mobile code. |
-| **6. Backend Tests** | Maven Verification Suite | **PASS** | `mvn clean verify`: **61 tests run, 0 failures, 0 errors, 0 skipped** across 15 test classes. |
+| **6. Backend Tests** | Maven Verification Suite | **PASS** | `mvn clean verify`: **63 tests run, 0 failures, 0 errors, 0 skipped** across 15 test classes. |
 | **7. Cross-Tier Tests**| Frontend Production Build | **PASS** | `npm --prefix frontend run build`: 19 pages compiled successfully via Turbopack. |
 | | Frontend System Test Suite | **PASS** | `npm run test:full`: **61 / 61 tests passed**. |
 | | Frontend Input & Sensor Fusion Suite | **PASS** | `npm run test:input`: **42 / 42 tests passed**. |
@@ -130,7 +130,7 @@ To ensure zero risk of production downtime or security exposure, the system is *
 ## 6. Backend Test Suite Reconciliation & Verification
 
 The discrepancy noted in previous documentation has been definitively reconciled:
-* **Total Executed Tests:** **61**
+* **Total Executed Tests:** **63**
 * **Total Test Classes:** **15**
 * **Failures:** 0
 * **Errors:** 0
@@ -138,8 +138,8 @@ The discrepancy noted in previous documentation has been definitively reconciled
 
 ### Complete Test Class Breakdown:
 1. `com.junction.config.ClerkJwtAuthenticationConverterTest` — **4 tests** (DB role resolution, forged token immunity, least privilege, memberships)
-2. `com.junction.controller.ComprehensiveSecurityAndApiControllerTest` — **21 tests** (Public access, 401 unauthenticated calls, edge device bearer auth, RBAC Organizer vs Attendee, partner scoping, `/api/auth/me`)
-3. `com.junction.health.HealthControllerTest` — **1 test** (Public health status endpoint) *(previously omitted from report text)*
+2. `com.junction.controller.ComprehensiveSecurityAndApiControllerTest` — **23 tests** (Public access, 401 unauthenticated calls, edge device bearer auth, RBAC Organizer vs Attendee, partner scoping, `/api/auth/me`, unprovisioned new user defaults to Attendee, metadata escalation rejection)
+3. `com.junction.health.HealthControllerTest` — **1 test** (Public health status endpoint)
 4. `com.junction.repository.JpaRepositoryIntegrationTest` — **5 tests** (Profile, Restaurant, Membership, AuditEvent, OperationalIntervention entities)
 5. `com.junction.service.DeviceRegistryServiceTest` — **2 tests** (Multi-sensor network initialization and zone queries)
 6. `com.junction.service.ForecastingServiceTest` — **2 tests** (Prediction horizons, threshold crossing)
@@ -152,7 +152,7 @@ The discrepancy noted in previous documentation has been definitively reconciled
 13. `com.junction.service.ScenarioServiceTest` — **3 tests** (Scenario state transitions, default scenario)
 14. `com.junction.service.SensorFusionServiceTest` — **3 tests** (Fused occupancy across 7 zones, stale telemetry penalty, fresh telemetry)
 15. `com.junction.service.ZoneRegistryServiceTest` — **3 tests** (7 canonical zones, coverage profiles, operational intervention gating)
-* **Sum Total:** 4 + 21 + 1 + 5 + 2 + 2 + 2 + 2 + 4 + 3 + 4 + 2 + 3 + 3 + 3 = **61 Tests across 15 Classes**.
+* **Sum Total:** 4 + 23 + 1 + 5 + 2 + 2 + 2 + 2 + 4 + 3 + 4 + 2 + 3 + 3 + 3 = **63 Tests across 15 Classes**.
 
 ---
 
@@ -254,7 +254,43 @@ To transition from **APPROVED FOR STAGING** to **FINAL PRODUCTION CUTOVER**, com
 
 ---
 
-## 12. Final Certification Sign-Off
+## 12. Local Live Verification & Defect Remediation Addendum
+
+During local end-to-end operational validation of the running system (Next.js on port 3000, Spring Boot on port 8080, PostgreSQL on port 5432 with active Clerk development keys), two critical defects and minor map UX discrepancies were identified and fully resolved:
+
+### 12.1 Issue 1: Clerk Role Provisioning Security Baseline
+* **Vulnerability Analysis:** Newly authenticated Clerk identities could previously be granted default `ORGANIZER` roles if unprovisioned in PostgreSQL. This violated least privilege and created potential authorization escalation risks.
+* **Remediation Implemented:**
+  * Updated `AuthController.java` and `ClerkJwtAuthenticationConverter.java` to enforce that all newly registered or unprovisioned Clerk identities strictly default to `UserRole.ATTENDEE` (`ROLE_ATTENDEE`).
+  * Elevated roles (`ORGANIZER`, `RESTAURANT_PARTNER`) require explicit, trusted administrative provisioning directly in the PostgreSQL database.
+  * Verified that client-forged JWT claims, metadata objects, or query parameters are ignored by Spring Security.
+* **Automated Regression Tests:**
+  * Added `testGetAuthMeNewUserDefaultsToAttendee` to verify new identities receive `role = "ATTENDEE"` and `isOrganizer = false`.
+  * Added `testNewUserCannotEscalateViaMetadata` to verify metadata privilege escalation attempts are rejected.
+  * Backend test suite expanded to **63 / 63 passed**.
+
+### 12.2 Issue 2: Organizer Dashboard Runtime Crash (`page.tsx:244:39`)
+* **Root Cause Diagnosis:** Spring Boot's `GET /api/recommendations` returns `OperationalInterventionDto[]` containing `expectedPressureReductionPercent`, but omitting `expectedImpact[]`. When `AppContext.tsx` mapped this response into frontend `Recommendation[]`, `expectedImpact` was left `undefined`. `OrganizerDashboard` (`frontend/src/app/organizer/page.tsx:244`) evaluated `{topRec.expectedImpact[0]?.before}`, throwing `TypeError: Cannot read properties of undefined (reading '0')`.
+* **Remediation Implemented:**
+  * Added canonical `expectedImpact` transformation in `frontend/src/state/AppContext.tsx`, deriving `[{ resourceName, before, after }]` from DTO fields.
+  * Added defensive array checks in `frontend/src/app/organizer/page.tsx:241` (`topRec.expectedImpact && topRec.expectedImpact.length > 0 ? ... : "Active Relief"`).
+  * Guarded downstream pages `predictions/page.tsx` and `recommendations/page.tsx` against undefined impact arrays.
+  * Created `scripts/testing/test-dashboard-resilience.ts` validating DTO mapping, empty array handling, missing optional fields, and empty `expectedImpact` fallback (4/4 passed).
+
+### 12.3 Map Sprites, Font Glyphs & MapLibre Encoding Remediation
+* **Map Sprite Warnings:** Missing OpenMapTiles sprite icons (`office`, `atm`, `swimming_pool`, `gate`, etc.) dynamically handled via `map.on("styleimagemissing")` with procedural canvas icons in `InvestigationMap.tsx` and `MapLibreCommandMap.tsx`.
+* **MapLibre Glyph Decoding Root Cause (`Unimplemented type: 4`):**
+  - Upstream redirection to `https://fonts.openmaptiles.org/` returned GitHub Pages HTML (`<!DOCTYPE html>`) with HTTP 200.
+  - When MapLibre's protobuf decoder parsed byte 0 (`<` = `0x3c` = 60), the bottom 3 bits evaluated to `60 & 7 = 4` (deprecated protobuf wire type 4 / Start/End Group), throwing `Error: Unimplemented type: 4. Rendering codepoint U+0930 locally instead.` for ranges `0-255` and `2304-2559`.
+* **Permanent Glyph Remediation:**
+  - **Self-Hosted Font Assets:** Downloaded and bundled 21 official protobuf glyph files (1.87 MB total) under `frontend/public/fonts/` for `Noto Sans Regular`, `Noto Sans Bold`, and `Noto Sans Italic` across ranges `0-255` (Latin), `256-511` (Latin Extended), `512-767`, `768-1023`, `1024-1279` (Cyrillic), `2304-2559` (Devanagari), and `8192-8447` (Punctuation).
+  - **On-Demand Protobuf Caching Route:** Implemented `frontend/src/app/fonts/[...slug]/route.ts` as an ironclad safety net that proxies unknown glyph ranges from OpenFreeMap (`https://tiles.openfreemap.org/fonts/`) with `Content-Type: application/x-protobuf` and caches to disk, preventing HTML 404s.
+  - **English Label Hierarchy:** OpenFreeMap Liberty style defaulted to concatenating `name:latin` with `name:nonlatin` (Devanagari). Configured `frontend/public/map-styles/liberty.json` and `map.setLayoutProperty` to prefer clean English labels `["coalesce", ["get", "name:en"], ["get", "name_en"], ["get", "name:latin"], ["get", "name"]]`, eliminating unsupported unshaped Devanagari while preserving Latin readability.
+* **Telemetry Honesty:** Aligned capacity page telemetry indicator to display `SIMULATED TELEMETRY` matching system header status.
+
+---
+
+## 13. Final Certification Sign-Off
 
 * **Repository State:** Clean working tree, zero uncommitted changes.
 * **Migration Completion:** 100% of legacy Next.js API routes retired; Spring Boot is the sole application backend.

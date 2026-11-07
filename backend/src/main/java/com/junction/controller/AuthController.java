@@ -41,11 +41,35 @@ public class AuthController {
 
         String clerkUserId = auth.getName();
         Optional<ProfileEntity> optProfile = profileRepository.findByClerkUserId(clerkUserId);
+        ProfileEntity profile;
         if (optProfile.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Profile not found"));
+            String email = null;
+            String name = null;
+            if (auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt jwt) {
+                email = jwt.getClaimAsString("email");
+                name = jwt.getClaimAsString("name");
+                if (name == null) {
+                    name = jwt.getClaimAsString("preferred_username");
+                }
+            }
+            if (email == null || email.isBlank()) {
+                email = clerkUserId + "@clerk.local";
+            }
+
+            // Standard secure provisioning: All newly registered identities strictly default to ATTENDEE.
+            // Elevated privileges (ORGANIZER, RESTAURANT_PARTNER) are granted exclusively through trusted
+            // database administration (e.g., PostgreSQL migration seeds or administrator role assignment).
+            profile = ProfileEntity.builder()
+                .clerkUserId(clerkUserId)
+                .email(email)
+                .name(name != null ? name : "Attendee")
+                .role(UserRole.ATTENDEE)
+                .build();
+            profile = profileRepository.save(profile);
+        } else {
+            profile = optProfile.get();
         }
 
-        ProfileEntity profile = optProfile.get();
         List<RestaurantMembershipEntity> memberships = membershipRepository.findByProfileId(profile.getId());
 
         List<Map<String, Object>> membershipDtos = memberships.stream()

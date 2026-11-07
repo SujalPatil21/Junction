@@ -90,8 +90,8 @@ export default function DestinationMap({
   const [showLegend, setShowLegend] = useState(true);
   const [showMatrix, setShowMatrix] = useState(true);
 
-  // MAP ENGINE TOGGLE: SECRET 3D Map (default) vs 2D Operational Map
-  const [mapEngine, setMapEngine] = useState<"MAPLIBRE" | "LEAFLET">("MAPLIBRE");
+  // MAP ENGINE TOGGLE: Google Photorealistic 3D (Cesium) vs MapLibre 3D vs 2D Operational Map
+  const [mapEngine, setMapEngine] = useState<"CESIUM" | "MAPLIBRE" | "LEAFLET">("CESIUM");
 
   // Multi-layer simultaneous composability - all operational layers enabled by default
   const [activeLayers, setActiveLayers] = useState<Set<string>>(
@@ -178,15 +178,27 @@ export default function DestinationMap({
         {/* 3D vs 2D MAP ENGINE TOGGLE BUTTONS */}
         <div style={{ display: "flex", gap: "2px", background: "rgba(15, 23, 42, 0.85)", padding: "2px", borderRadius: "16px", marginRight: "8px", border: "1px solid rgba(255,255,255,0.12)" }}>
           <button
+            className={`${styles.layerBtn} ${mapEngine === "CESIUM" ? styles.layerActive : ""}`}
+            onClick={() => {
+              setMapEngine("CESIUM");
+              setWorldProvider("google-photorealistic");
+            }}
+            title="Google Photorealistic 3D Tiles via CesiumJS"
+            style={{ borderRadius: "12px 0 0 12px", padding: "3px 10px" }}
+          >
+            🌐 Google 3D Tiles
+          </button>
+
+          <button
             className={`${styles.layerBtn} ${mapEngine === "MAPLIBRE" ? styles.layerActive : ""}`}
             onClick={() => {
               setMapEngine("MAPLIBRE");
               setWorldProvider("maplibre-extrusion");
             }}
-            title="SECRET 3D Vector Map Engine"
-            style={{ borderRadius: "12px 0 0 12px", padding: "3px 10px" }}
+            title="MapLibre 3D Vector & Extrusion Engine"
+            style={{ padding: "3px 10px" }}
           >
-            🏙️ SECRET 3D Map
+            🏙️ MapLibre 3D
           </button>
 
           <button
@@ -246,7 +258,7 @@ export default function DestinationMap({
           </span>
           <span className={styles.simElapsed}>+{simulationState.minutesElapsed}m</span>
           <span className={styles.telemetryEnvBadge}>
-            {mapEngine === "MAPLIBRE" ? "SECRET 3D MAPLIBRE ACTIVE" : "LEAFLET 2D ACTIVE"}
+            {mapEngine === "CESIUM" ? "GOOGLE 3D TILES (CESIUM) ACTIVE" : mapEngine === "MAPLIBRE" ? "MAPLIBRE 3D ACTIVE" : "LEAFLET 2D ACTIVE"}
           </span>
           {staleObs.length > 0 && (
             <span className="pill pill-watch" style={{ fontSize: 9 }} title={`${staleObs.length} sensor observations exceed freshness threshold`}>
@@ -292,7 +304,20 @@ export default function DestinationMap({
 
       {/* GEOGRAPHIC COMMAND MAP CONTAINER */}
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-        {mapEngine === "LEAFLET" ? (
+        {mapEngine === "CESIUM" ? (
+          <CesiumCommandMap
+            resources={resources}
+            hotels={hotels}
+            restaurants={restaurants}
+            roads={roads}
+            flows={flows}
+            hotspots={hotspots}
+            simulationState={simulationState}
+            activeLayers={activeLayers}
+            onSelectResource={onSelectResource}
+            selectedId={selectedId}
+          />
+        ) : mapEngine === "LEAFLET" ? (
           <LeafletCommandMap
             resources={resources}
             hotels={hotels}

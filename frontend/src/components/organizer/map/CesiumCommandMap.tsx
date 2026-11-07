@@ -120,7 +120,7 @@ export default function CesiumCommandMap({
 
     // Check credentials (Never logged or exposed)
     const ionToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
-    const googleTilesKey = process.env.NEXT_PUBLIC_GOOGLE_3D_TILES_KEY;
+    const googleTilesKey = process.env.NEXT_PUBLIC_GOOGLE_3D_TILES_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     const hasIonToken = Boolean(ionToken && ionToken.trim().length > 0);
     const hasGoogleKey = Boolean(googleTilesKey && googleTilesKey.trim().length > 0);
 
@@ -155,10 +155,13 @@ export default function CesiumCommandMap({
       // Force 3D Scene Mode (Never 2D or Columbus View)
       viewer.scene.mode = Cesium.SceneMode.SCENE3D;
 
-      // Hide credit text container
+      // Ensure required Google / Cesium attribution is visible on screen
       const creditDisplay = viewer.creditDisplay as any;
       if (creditDisplay && creditDisplay.container) {
-        creditDisplay.container.style.display = "none";
+        creditDisplay.container.style.display = "block";
+        creditDisplay.container.style.background = "rgba(0, 0, 0, 0.65)";
+        creditDisplay.container.style.padding = "2px 8px";
+        creditDisplay.container.style.borderRadius = "4px";
       }
 
       // Initial Oblique 3D Perspective (Heading: 25°, Pitch: -35°, Altitude: 2500m)

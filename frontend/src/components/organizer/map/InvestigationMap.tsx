@@ -47,7 +47,7 @@ interface Props {
 const MUMBAI_CENTER: [number, number] = [72.8258, 18.9388];
 const INDIA_CENTER: [number, number] = [78.9629, 20.5937];
 const INDIA_BOUNDS: [[number, number], [number, number]] = [[67, 6.5], [98, 37.2]];
-const OPENFREEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const OPENFREEMAP_STYLE = "/map-styles/liberty.json";
 const OPENFREEMAP_PLANET = "https://tiles.openfreemap.org/planet";
 
 const BUILDING_HEIGHT: maplibregl.ExpressionSpecification = [
@@ -243,12 +243,28 @@ function recolorMapStyle(map: MapLibreMap) {
       setPaint(map, layer.id, "line-color", color);
       setPaint(map, layer.id, "line-opacity", isMajor ? 0.9 : 0.75);
     }
-    // Typography Hierarchy
+    // Typography Hierarchy & English Label Enforcement
     if (layer.type === "symbol") {
       const isMajorLabel = id.includes("city") || id.includes("country") || id.includes("state");
       setPaint(map, layer.id, "text-color", isMajorLabel ? "#f8fafc" : "#94a3b8");
       setPaint(map, layer.id, "text-halo-color", "#040714");
       setPaint(map, layer.id, "text-halo-width", 2);
+
+      const layout = (layer as any).layout;
+      if (layout && layout["text-field"]) {
+        const tfStr = JSON.stringify(layout["text-field"]);
+        if (tfStr.includes("name:nonlatin")) {
+          try {
+            map.setLayoutProperty(layer.id, "text-field", [
+              "coalesce",
+              ["get", "name:en"],
+              ["get", "name_en"],
+              ["get", "name:latin"],
+              ["get", "name"],
+            ]);
+          } catch {}
+        }
+      }
     }
   });
 }
@@ -1031,9 +1047,77 @@ export default function InvestigationMap({
       maxPitch: 85,
       maxZoom: 22,
       minZoom: 2,
+      transformRequest: (url: string, resourceType?: string) => {
+        if (resourceType === "Glyphs") {
+          const match = url.match(/\/fonts\/([^/]+)\/([^/]+\.pbf)/);
+          if (match) {
+            return {
+              url: `/fonts/${match[1]}/${match[2]}`,
+            };
+          }
+        }
+        return { url };
+      },
     } as unknown as maplibregl.MapOptions);
 
     mapRef.current = map;
+
+    // Dynamically synthesize and register icons for POIs missing from upstream vector style sprites
+    map.on("styleimagemissing", (e) => {
+      const id = e.id;
+      if (map.hasImage(id)) return;
+
+      const size = 24;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const iconColors: Record<string, string> = {
+        office: "#3b82f6",
+        atm: "#10b981",
+        swimming_pool: "#06b6d4",
+        gate: "#f59e0b",
+        lift_gate: "#ef4444",
+        sports_center: "#8b5cf6",
+        ferry_terminal: "#0284c7",
+        bollard: "#64748b",
+      };
+
+      const iconSymbols: Record<string, string> = {
+        office: "🏢",
+        atm: "₹",
+        swimming_pool: "🏊",
+        gate: "🚪",
+        lift_gate: "🚧",
+        sports_center: "🏟",
+        ferry_terminal: "⛴",
+        bollard: "🛑",
+      };
+
+      const bg = iconColors[id] || "#38bdf8";
+      const sym = iconSymbols[id] || "•";
+
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 11px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(sym, size / 2, size / 2 + 0.5);
+
+      const imageData = ctx.getImageData(0, 0, size, size);
+      if (!map.hasImage(id)) {
+        map.addImage(id, imageData, { pixelRatio: 1 });
+      }
+    });
     const threeOverlay = createThreeIntelOverlay();
     threeOverlayRef.current = threeOverlay;
 

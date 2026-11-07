@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -269,5 +270,30 @@ class ComprehensiveSecurityAndApiControllerTest {
             .andExpect(jsonPath("$.memberships").isArray())
             .andExpect(jsonPath("$.memberships[0].restaurantId").value("R1"))
             .andExpect(jsonPath("$.isRestaurantPartner").value(true));
+    }
+
+    @Test
+    @DisplayName("Auth: GET /api/auth/me auto-provisions unknown users strictly with ATTENDEE role")
+    void testGetAuthMeNewUserDefaultsToAttendee() throws Exception {
+        String newUserId = "clerk_new_attendee_" + UUID.randomUUID();
+        mockMvc.perform(get("/api/auth/me")
+                .with(jwt().jwt(j -> j.subject(newUserId)).authorities(new SimpleGrantedAuthority("ROLE_ATTENDEE"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.profile.clerkUserId").value(newUserId))
+            .andExpect(jsonPath("$.profile.role").value("ATTENDEE"))
+            .andExpect(jsonPath("$.isOrganizer").value(false));
+    }
+
+    @Test
+    @DisplayName("Auth: Forged client metadata claiming ORGANIZER cannot escalate unprovisioned user")
+    void testNewUserCannotEscalateViaMetadata() throws Exception {
+        String attackerId = "clerk_attacker_" + UUID.randomUUID();
+        mockMvc.perform(get("/api/auth/me")
+                .with(jwt().jwt(j -> j.subject(attackerId).claim("role", "ORGANIZER").claim("metadata", Map.of("role", "ORGANIZER")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_ATTENDEE"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.profile.role").value("ATTENDEE"))
+            .andExpect(jsonPath("$.isOrganizer").value(false));
     }
 }
