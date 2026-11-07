@@ -17,6 +17,8 @@ import {
   Zap,
   Sliders,
   Calendar,
+  Box,
+  ArrowLeftRight,
 } from "lucide-react";
 
 const NAV = [
@@ -24,12 +26,14 @@ const NAV = [
     group: "COMMAND",
     items: [
       { href: "/organizer", label: "Operations Room", icon: <LayoutDashboard size={16} strokeWidth={2} /> },
+      { href: "/organizer/select", label: "Scope Selector", icon: <ArrowLeftRight size={16} strokeWidth={2} /> },
     ],
   },
   {
     group: "DESTINATION",
     items: [
       { href: "/organizer/map", label: "Live Command Map", icon: <MapIcon size={16} strokeWidth={2} /> },
+      { href: "/organizer/stadium", label: "Stadium Digital Twin", icon: <Box size={16} strokeWidth={2} /> },
       { href: "/organizer/cctv-demo", label: "CCTV Telemetry Lab", icon: <Video size={16} strokeWidth={2} /> },
       { href: "/organizer/capacity", label: "Capacity & Hotels", icon: <Building2 size={16} strokeWidth={2} /> },
       { href: "/organizer/predictions", label: "Predictions & Cascade", icon: <TrendingUp size={16} strokeWidth={2} /> },
@@ -53,18 +57,24 @@ const NAV = [
 export default function OrganizerLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { activeScenario, setScenario } = useApp();
+  const { activeScenario, setScenario, actionStatus, clearActionStatus } = useApp();
   const { user, isLoaded, isSignedIn } = useUser();
   const { getToken } = useAuth();
   const [dbProfile, setDbProfile] = useState<any>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const isDevPreview = pathname === "/organizer/stadium-preview";
+  const isStandaloneRoute =
+    pathname === "/organizer/select" ||
+    pathname === "/organizer/stadium" ||
+    pathname === "/organizer/stadium-preview";
+
   // Auth protection guard
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (!isDevPreview && isLoaded && !isSignedIn) {
       router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [isLoaded, isSignedIn, router, pathname]);
+  }, [isLoaded, isSignedIn, router, pathname, isDevPreview]);
 
   // Fetch authoritative authenticated profile from Spring Boot on port 8080
   useEffect(() => {
@@ -96,7 +106,7 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
     return () => { isMounted = false; };
   }, [isLoaded, isSignedIn, getToken]);
 
-  if (!isLoaded || !isSignedIn) {
+  if (!isDevPreview && (!isLoaded || !isSignedIn)) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111111" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
@@ -107,6 +117,11 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
         </div>
       </div>
     );
+  }
+
+  // Standalone full-viewport mode for /organizer/select, /organizer/stadium, and /organizer/stadium-preview
+  if (isStandaloneRoute) {
+    return <>{children}</>;
   }
 
   const userDisplayName = dbProfile?.name || user?.fullName || user?.primaryEmailAddress?.emailAddress || "City Operations Command";
@@ -129,6 +144,33 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
           >
             {isCollapsed ? "»" : "«"}
           </button>
+        </div>
+
+        {/* Switch Operations Action */}
+        <div style={{ padding: isCollapsed ? "8px 6px" : "8px 12px", borderBottom: "1px solid var(--border-subtle, rgba(255,255,255,0.1))" }}>
+          <Link
+            href="/organizer/select"
+            title="Return to Scope Selection"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: isCollapsed ? "center" : "flex-start",
+              gap: "8px",
+              padding: "7px 10px",
+              background: "rgba(255, 214, 0, 0.08)",
+              border: "1px solid rgba(255, 214, 0, 0.25)",
+              borderRadius: "6px",
+              color: "#ffd600",
+              fontSize: "11px",
+              fontWeight: 700,
+              textDecoration: "none",
+              letterSpacing: "0.04em",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <ArrowLeftRight size={13} strokeWidth={2.5} />
+            {!isCollapsed && <span>SWITCH OPERATIONS</span>}
+          </Link>
         </div>
 
         <nav className={styles.sidebarNav}>
@@ -231,6 +273,53 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
         </header>
 
         <div className={styles.content}>
+          {actionStatus && (
+            <div
+              style={{
+                position: "fixed",
+                top: "72px",
+                right: "24px",
+                zIndex: 9999,
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 18px",
+                borderRadius: "6px",
+                backgroundColor: actionStatus.type === "error" ? "#7f1d1d" : "#064e3b",
+                color: actionStatus.type === "error" ? "#fca5a5" : "#6ee7b7",
+                border: `1px solid ${actionStatus.type === "error" ? "#ef4444" : "#10b981"}`,
+                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3)",
+                fontFamily: "var(--font-sans)",
+                fontSize: "13px",
+                fontWeight: 600,
+                maxWidth: "520px",
+                animation: "fadeInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+            >
+              <span style={{ fontSize: "16px", lineHeight: 1 }}>
+                {actionStatus.type === "error" ? "⚠️" : "✓"}
+              </span>
+              <span style={{ flex: 1, color: "#ffffff", lineHeight: 1.35 }}>
+                {actionStatus.message}
+              </span>
+              <button
+                onClick={clearActionStatus}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "rgba(255, 255, 255, 0.7)",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  padding: "2px 6px",
+                  lineHeight: 1,
+                }}
+                title="Dismiss status notification"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           {children}
         </div>
       </div>

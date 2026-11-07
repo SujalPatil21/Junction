@@ -48,6 +48,8 @@ export * from "./recommendation";
 export * from "./audit";
 export * from "./resource";
 export * from "./cctv";
+export * from "./aiRecommendation";
+export * from "./weather";
 
 export interface Zone {
   id: string;
@@ -93,6 +95,10 @@ export interface Restaurant {
   distanceFromVenue: number; pressure: number;
   pressureLevel: PressureLevel; source: ConfidenceSource;
   hasIncentive: boolean; incentiveLabel?: string; recommended?: boolean;
+  imageUrl?: string;
+  image?: string;
+  rating?: number;
+  address?: string;
 }
 
 export interface RoadEdge {
@@ -161,17 +167,32 @@ export interface CascadeNode {
   children: string[];
 }
 
-export type RecommendationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'MODIFIED';
+export type RecommendationStatus = 'PENDING' | 'APPROVED' | 'ACTIVE' | 'REJECTED' | 'MODIFIED' | 'COMPLETED';
 
 export interface RecommendationImpact { resourceName: string; before: number; after: number; }
 
 export interface Recommendation {
-  id: string; type: 'REDISTRIBUTE' | 'TRANSPORT' | 'ACCOMMODATION' | 'TIMING' | 'ALERT';
-  title: string; problem: string; action: string; reason: string;
-  expectedImpact: RecommendationImpact[]; tradeOff: string;
-  confidence: 'HIGH' | 'MEDIUM' | 'LOW'; source: ConfidenceSource;
-  status: RecommendationStatus; affectsAttendee: boolean;
-  attendeeMessage?: string; priority: number;
+  id: string;
+  type: 'REDISTRIBUTE' | 'TRANSPORT' | 'ACCOMMODATION' | 'TIMING' | 'ALERT' | 'STAFFING' | 'ACCESS' | 'COMMUNICATION' | 'OTHER';
+  title: string;
+  problem: string;
+  action: string;
+  reason: string;
+  expectedImpact: RecommendationImpact[];
+  tradeOff: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  source: ConfidenceSource;
+  status: RecommendationStatus;
+  affectsAttendee: boolean;
+  attendeeMessage?: string;
+  priority: number;
+  // Optional AI-planner metadata
+  actionType?: string;
+  evidence?: string[];
+  affectedZones?: string[];
+  timeHorizonMinutes?: number;
+  approvedAt?: number;
+  baselines?: Record<string, import("./recommendation").ZoneBaselineSnapshot>;
 }
 
 export type AlertSeverity = 'WATCH' | 'HIGH' | 'CRITICAL';
@@ -195,7 +216,7 @@ export interface SimulationResult {
   recommendations: string[]; summary: string;
 }
 
-export type SimulationStatus = 'IDLE' | 'PLAYING' | 'PAUSED';
+export type SimulationStatus = 'IDLE' | 'PLAYING' | 'PAUSED' | 'COMPLETE';
 export type SimulationSpeed = 1 | 5 | 10;
 
 export interface HumanCohort {

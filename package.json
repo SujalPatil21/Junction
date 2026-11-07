@@ -11,6 +11,10 @@
     "build:backend": "cd backend && mvn clean package -DskipTests",
     "test:full": "tsx --tsconfig scripts/tsconfig.json scripts/testing/test-full-system.ts",
     "test:input": "tsx --tsconfig scripts/tsconfig.json scripts/testing/test-input-system.ts",
+    "test:cctv": "tsx --tsconfig scripts/tsconfig.json scripts/testing/scenarios/test-cctv-system.ts",
+    "test:nugen": "tsx --tsconfig scripts/tsconfig.json scripts/testing/scenarios/test-nugen-task2.ts",
+    "test:flow": "tsx --tsconfig scripts/tsconfig.json scripts/testing/scenarios/test-recommendation-attendee-flow.ts",
+    "test:resilience": "tsx --tsconfig scripts/tsconfig.json scripts/testing/test-dashboard-resilience.ts",
     "test:cv": "pytest -c cv_bridge/pytest.ini cv_bridge/tests -v",
     "test:backend": "cd backend && mvn test",
     "generate:qr": "node scripts/utilities/generate_qr.js"

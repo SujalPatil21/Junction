@@ -11,6 +11,7 @@
   user-select: none;
 }
 
+/* ── HEADER ─────────────────────────────────────────────────── */
 .header {
   height: 56px;
   background: rgba(3, 7, 18, 0.85);
@@ -121,6 +122,7 @@
   box-shadow: 0 0 6px #10b981;
 }
 
+/* ── MAIN VIEWPORT AREA ─────────────────────────────────────── */
 .viewportArea {
   position: relative;
   flex: 1;
@@ -130,6 +132,7 @@
   background: radial-gradient(circle at 50% 40%, #0b172a 0%, #030712 85%);
 }
 
+/* ── TOP CENTER SEARCH BAR ──────────────────────────────────── */
 .searchContainer {
   position: absolute;
   top: 16px;
@@ -192,6 +195,7 @@
   color: #ffffff;
 }
 
+/* Search Dropdown Results */
 .searchDropdown {
   position: absolute;
   top: 52px;
@@ -236,6 +240,7 @@
   color: #9ca3af;
 }
 
+/* ── LEFT NAVIGATION CARD (`NAVIGATE`) ────────────────────── */
 .navCard {
   position: absolute;
   top: 16px;
@@ -368,6 +373,7 @@
   border-color: #ef4444;
 }
 
+/* ── ACTIVE ROUTE CARD ─────────────────────────────────────── */
 .routeCard {
   position: absolute;
   top: 16px;
@@ -407,6 +413,7 @@
   color: #ef4444;
   padding: 2px 8px;
   border-radius: 4px;
+
 }
 
 .routeMetrics {
@@ -458,6 +465,7 @@
   background: #dc2626;
 }
 
+/* ── FLOATING SEAT / DESTINATION CARD ─────────────────────── */
 .destinationFloatingCard {
   position: absolute;
   bottom: 80px;
@@ -497,6 +505,7 @@
   cursor: pointer;
 }
 
+/* ── BOTTOM CONTROLS BAR ──────────────────────────────────── */
 .bottomControls {
   position: absolute;
   bottom: 16px;
@@ -552,6 +561,7 @@
   50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.8); }
 }
 
+/* ── GEMINI FLOATING TRIGGER ──────────────────────────────── */
 .geminiFloatBtn {
   position: absolute;
   bottom: 16px;
@@ -577,6 +587,7 @@
   transform: translateY(-2px) scale(1.03);
 }
 
+/* ── GEMINI ASSISTANT DRAWER ──────────────────────────────── */
 .geminiDrawer {
   position: absolute;
   top: 56px;
@@ -673,6 +684,7 @@
   cursor: pointer;
 }
 
+/* ── ADMIN VIEW ────────────────────────────────────────────── */
 .adminOverlay {
   position: absolute;
   top: 56px;
@@ -721,6 +733,7 @@
   border-bottom: none;
 }
 
+/* ── DEBUG PANEL ───────────────────────────────────────────── */
 .debugPanel {
   position: absolute;
   bottom: 60px;

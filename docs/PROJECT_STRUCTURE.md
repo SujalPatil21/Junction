@@ -34,15 +34,21 @@ Junction-App/
 ## 2. Directory-by-Directory Breakdown
 
 ### `frontend/`
-- **Responsibility:** User presentation, operational maps, attendee showcase, role-based dashboards.
-- **Technology:** Next.js 16.3.4 (App Router), React 19.2.8, TypeScript 5, Tailwind CSS, Leaflet, Cesium.
+- **Responsibility:** User presentation, operational maps, attendee showcase, role-based dashboards, 3D digital twins.
+- **Technology:** Next.js 16.3.4 (App Router), React 19.2.8, TypeScript 5, Tailwind CSS, Leaflet, CesiumJS (Google 3D Tiles), Three.js / React Three Fiber (Stadium Twin), MapLibre GL.
 - **Security:** Clerk Authentication with official Next.js 16 `src/proxy.ts`.
 - **Backend Communication:** Directly connects to Spring Boot backend (`http://localhost:8080`) through typed REST client `src/lib/api-client/junctionApi.ts` and Next.js proxy rewrites in `next.config.ts`.
-- **Key Files:**
-  - `src/app/` — Application pages (organizer `/`, partner `/partner`, attendee `/attendee`)
-  - `src/components/` — Modular UI components (map, cctv, organizer, analytics)
+- **Key Modules:**
+  - `src/app/` — Application pages (organizer `/organizer`, stadium twin `/organizer/stadium`, scope selector `/organizer/select`, partner `/partner`, attendee `/attendee`)
+  - `src/components/organizer/stadium/` — Three.js Wankhede Stadium Digital Twin (`HoloJiStadiumTwin`)
+  - `src/components/organizer/cctv/` — 9-Channel Synchronized CCTV System with 60 FPS ByteTrack overlays
+  - `src/services/weatherService.ts` & `weatherImpactModel.ts` — Open-Meteo Weather Digital Twin Layer
+  - `src/services/nugenService.ts` — Nugen Task 2 Domain Intelligence Evaluation Engine
+  - `src/services/aiRecommendationPlanner.ts` — Multi-Horizon AI Recommendation Planner (Google GenAI)
   - `src/lib/api-client/` — Typed API client (`junctionApi.ts`)
   - `src/proxy.ts` — Clerk auth proxy middleware
+  - `public/models/wankhede_stadium.glb` — 3D stadium geometry model
+  - `public/JUNCTION-Release.apk` — Attendee Android release package
   - `Dockerfile` — Multi-stage standalone production container
 
 ### `backend/`

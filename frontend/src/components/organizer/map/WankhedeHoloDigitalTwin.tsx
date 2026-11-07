@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   WANKHEDE_STANDS,
   STADIUM_NODES,
@@ -17,18 +17,24 @@ interface Props {
 }
 
 export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
+  // ── 1. ACTIVE VIEW TAB (3D VIEW | GEMINI | ADMIN) ──────────────────────────
   const [activeTab, setActiveTab] = useState<"3D" | "GEMINI" | "ADMIN">("3D");
+
+  // ── 2. SEARCH ENGINE STATE ──────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
+  // ── 3. ROUTE & NAVIGATION STATE ───────────────────────────────────────────
   const [fromNodeId, setFromNodeId] = useState<string>("NODE_GATE_1");
   const [toNodeId, setToNodeId] = useState<string>("NODE_SEAT_D142");
   const [routeType, setRouteType] = useState<"SHORTEST" | "FASTEST" | "ACCESSIBLE" | "EVACUATION">("SHORTEST");
   const [activeRoute, setActiveRoute] = useState<RouteResult | null>(null);
 
+  // ── 4. SELECTION & SEAT DETAILS ────────────────────────────────────────────
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>("D-142");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>("NODE_SEAT_D142");
 
+  // ── 5. TOGGLE MODES ─────────────────────────────────────────────────────────
   const [xrayMode, setXrayMode] = useState(false);
   const [evacMode, setEvacMode] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
@@ -36,21 +42,25 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
   const [isGeminiOpen, setIsGeminiOpen] = useState(false);
   const [cameraView, setCameraView] = useState<"OVERVIEW" | "FOLLOW" | "FOCUS">("OVERVIEW");
 
+  // ── 6. GEMINI ASSISTANT STATE ──────────────────────────────────────────────
   const [geminiMessages, setGeminiMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([
     { sender: "ai", text: "Hello! I am your Wankhede Holo Assistant. Where would you like to navigate inside the stadium?" },
   ]);
   const [geminiInput, setGeminiInput] = useState("");
 
+  // Auto-calculate route on initial load for seamless product demo
   useEffect(() => {
     handleCalculateRoute("NODE_GATE_1", "NODE_SEAT_D142", "SHORTEST");
   }, []);
 
+  // Handle Search Input Filtering
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase().trim();
 
     const matches: Array<{ id: string; title: string; subtitle: string; nodeId: string; type: "SEAT" | "GATE" | "EXIT" | "STAND" }> = [];
 
+    // Search Seats
     SEAT_DATABASE.forEach((seat) => {
       if (seat.id.toLowerCase().includes(q) || seat.stand.toLowerCase().includes(q) || seat.block.toLowerCase().includes(q)) {
         matches.push({
@@ -63,6 +73,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
       }
     });
 
+    // Search Gates
     Object.values(STADIUM_NODES)
       .filter((n) => n.category === "GATE")
       .forEach((gate) => {
@@ -77,6 +88,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
         }
       });
 
+    // Search Exits
     Object.values(STADIUM_NODES)
       .filter((n) => n.category === "EXIT")
       .forEach((exit) => {
@@ -91,6 +103,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
         }
       });
 
+    // Search Stands
     WANKHEDE_STANDS.forEach((stand) => {
       if (stand.name.toLowerCase().includes(q) || stand.shortName.toLowerCase().includes(q)) {
         matches.push({
@@ -151,6 +164,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
     setGeminiMessages((prev) => [...prev, { sender: "user", text: userText }]);
     setGeminiInput("");
 
+    // Simulate Gemini Natural Language Intent Parsing
     setTimeout(() => {
       if (userText.toLowerCase().includes("gate 1") && userText.toLowerCase().includes("d-142")) {
         setFromNodeId("NODE_GATE_1");
@@ -179,8 +193,13 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
     return SEAT_DATABASE.find((s) => s.id === selectedSeatId) || SEAT_DATABASE[0];
   }, [selectedSeatId]);
 
+  const selectedNode = useMemo(() => {
+    return STADIUM_NODES[selectedNodeId || ""] || null;
+  }, [selectedNodeId]);
+
   return (
     <div className={styles.container}>
+      {/* ── 1. CLEAN HEADER ─────────────────────────────────────────────────── */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <h1 className={styles.logoTitle}>
@@ -240,7 +259,9 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
         </div>
       </header>
 
+      {/* ── 2. MAIN 3D VIEWPORT HERO (75-85% VISUAL ATTENTION) ─────────────── */}
       <main className={styles.viewportArea}>
+        {/* TOP CENTER SEARCH BAR */}
         <div className={styles.searchContainer}>
           <div className={styles.searchBox}>
             <span className={styles.searchIcon}>🔍</span>
@@ -262,6 +283,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
             )}
           </div>
 
+          {/* Search Dropdown */}
           {isSearching && searchResults.length > 0 && (
             <div className={styles.searchDropdown}>
               {searchResults.map((res) => (
@@ -281,6 +303,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
           )}
         </div>
 
+        {/* ── LEFT NAVIGATION CARD (`NAVIGATE`) ──────────────────────────── */}
         <div className={styles.navCard}>
           <h3 className={styles.cardHeaderTitle}>
             <span>NAVIGATE</span>
@@ -365,6 +388,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
           </button>
         </div>
 
+        {/* ── ACTIVE ROUTE CARD ──────────────────────────────────────────── */}
         {activeRoute && (
           <div className={styles.routeCard}>
             <div className={styles.routeTitle}>
@@ -395,6 +419,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
           </div>
         )}
 
+        {/* ── FLOATING SEAT / DESTINATION CARD ──────────────────────────── */}
         {selectedSeat && !activeRoute && (
           <div className={styles.destinationFloatingCard}>
             <div>
@@ -413,20 +438,24 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
           </div>
         )}
 
+        {/* ── 3D HOLOGRAPHIC CANVAS VIEWPORT (STADIUM HERO) ───────────────── */}
         <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
           <svg width="100%" height="100%" style={{ width: "100%", height: "100%" }}>
+            {/* Background 3D Grid */}
             <defs>
-              <pattern id="holoGridApp" width="40" height="40" patternUnits="userSpaceOnUse">
+              <pattern id="holoGrid" width="40" height="40" patternUnits="userSpaceOnUse">
                 <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(56, 189, 248, 0.08)" strokeWidth="1" />
               </pattern>
-              <linearGradient id="pitchGradApp" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="pitchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#064e3b" />
                 <stop offset="100%" stopColor="#022c22" />
               </linearGradient>
             </defs>
-            <rect width="100%" height="100%" fill="url(#holoGridApp)" />
+            <rect width="100%" height="100%" fill="url(#holoGrid)" />
 
+            {/* Stadium Holographic Structure Group */}
             <g transform="translate(620, 360) scale(1.1)">
+              {/* Outer Stadium Perimeter Ring */}
               <ellipse
                 cx="0"
                 cy="0"
@@ -438,6 +467,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
                 strokeDasharray={xrayMode ? "4 4" : "none"}
               />
 
+              {/* Concourse Corridor Ring */}
               <ellipse
                 cx="0"
                 cy="0"
@@ -448,9 +478,11 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
                 strokeWidth="2"
               />
 
-              <ellipse cx="0" cy="0" rx="160" ry="95" fill="url(#pitchGradApp)" stroke="#10b981" strokeWidth="2.5" />
+              {/* Pitch Oval */}
+              <ellipse cx="0" cy="0" rx="160" ry="95" fill="url(#pitchGrad)" stroke="#10b981" strokeWidth="2.5" />
               <rect x="-18" y="-12" width="36" height="24" fill="none" stroke="#f59e0b" strokeWidth="1.5" />
 
+              {/* 3D RED NAVIGATION ROUTE LINE */}
               {activeRoute && (
                 <g>
                   <path
@@ -466,41 +498,56 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
                 </g>
               )}
 
+              {/* Major Stand Holographic Labels */}
               <g fontSize="11" fontWeight="800" textAnchor="middle" fill="#ffffff" letterSpacing="1">
+                {/* SUNIL GAVASKAR STAND */}
                 <text x="260" y="-70" fill="#38bdf8">SUNIL GAVASKAR</text>
                 <text x="260" y="-56" fontSize="9" fill="#9ca3af">STAND</text>
 
+                {/* SACHIN TENDULKAR STAND */}
                 <text x="0" y="-180" fill="#f59e0b">SACHIN TENDULKAR</text>
                 <text x="0" y="-166" fontSize="9" fill="#9ca3af">STAND</text>
 
+                {/* VIJAY MERCHANT STAND */}
                 <text x="240" y="110" fill="#10b981">VIJAY MERCHANT</text>
                 <text x="240" y="124" fontSize="9" fill="#9ca3af">STAND</text>
 
+                {/* MCA PAVILION */}
                 <text x="-260" y="-50" fill="#a855f7">MCA PAVILION</text>
+
+                {/* GARWARE PAVILION */}
                 <text x="0" y="180" fill="#ec4899">GARWARE PAVILION</text>
+
+                {/* DIVECHA PAVILION */}
                 <text x="-240" y="110" fill="#06b6d4">DIVECHA PAVILION</text>
               </g>
 
+              {/* Compact Gate & Exit Markers */}
+              {/* Gate 1 */}
               <g transform="translate(280, -90)" cursor="pointer" onClick={() => setFromNodeId("NODE_GATE_1")}>
                 <rect x="-14" y="-10" width="28" height="20" rx="4" fill="#38bdf8" />
                 <text x="0" y="4" fontSize="10" fontWeight="900" fill="#030712" textAnchor="middle">G1</text>
               </g>
 
+              {/* Gate 2 */}
               <g transform="translate(10, -195)" cursor="pointer" onClick={() => setFromNodeId("NODE_GATE_2")}>
                 <rect x="-14" y="-10" width="28" height="20" rx="4" fill="#38bdf8" />
                 <text x="0" y="4" fontSize="10" fontWeight="900" fill="#030712" textAnchor="middle">G2</text>
               </g>
 
+              {/* Gate 3 */}
               <g transform="translate(260, 130)" cursor="pointer" onClick={() => setFromNodeId("NODE_GATE_3")}>
                 <rect x="-14" y="-10" width="28" height="20" rx="4" fill="#38bdf8" />
                 <text x="0" y="4" fontSize="10" fontWeight="900" fill="#030712" textAnchor="middle">G3</text>
               </g>
 
+              {/* Exit 4 */}
               <g transform="translate(310, -50)" cursor="pointer" onClick={() => setToNodeId("NODE_EXIT_4")}>
                 <rect x="-18" y="-10" width="36" height="20" rx="4" fill="#ef4444" />
                 <text x="0" y="4" fontSize="9" fontWeight="900" fill="#ffffff" textAnchor="middle">EXIT 4</text>
               </g>
 
+              {/* Active Seat Pin D-142 */}
               <g transform="translate(230, -30)" cursor="pointer" onClick={() => setSelectedSeatId("D-142")}>
                 <circle cx="0" cy="0" r="10" fill="#ef4444" stroke="#ffffff" strokeWidth="2" />
                 <text x="0" y="4" fontSize="8" fontWeight="900" fill="#ffffff" textAnchor="middle">D142</text>
@@ -509,6 +556,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
           </svg>
         </div>
 
+        {/* ── BOTTOM ACTION & CAMERA CONTROLS ───────────────────────────── */}
         <div className={styles.bottomControls}>
           <button
             className={`${styles.controlBtn} ${cameraView === "OVERVIEW" ? styles.controlActive : ""}`}
@@ -562,10 +610,12 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
           </button>
         </div>
 
+        {/* ── GEMINI FLOATING BUTTON ───────────────────────────────────── */}
         <button className={styles.geminiFloatBtn} onClick={() => setIsGeminiOpen(!isGeminiOpen)}>
           ✦ Gemini Assistant
         </button>
 
+        {/* ── GEMINI ASSISTANT RIGHT DRAWER ─────────────────────────────── */}
         {isGeminiOpen && (
           <aside className={styles.geminiDrawer}>
             <div className={styles.geminiHeader}>
@@ -602,6 +652,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
           </aside>
         )}
 
+        {/* ── ADMIN VERIFICATION VIEW ──────────────────────────────────── */}
         {activeTab === "ADMIN" && (
           <div className={styles.adminOverlay}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -642,6 +693,7 @@ export default function WankhedeHoloDigitalTwin({ onBackToDashboard }: Props) {
           </div>
         )}
 
+        {/* ── COLLAPSIBLE DEBUG PANEL ──────────────────────────────────── */}
         {showDebug && (
           <div className={styles.debugPanel}>
             <div style={{ fontWeight: 900, marginBottom: 6, borderBottom: "1px solid #f59e0b", paddingBottom: 4 }}>
