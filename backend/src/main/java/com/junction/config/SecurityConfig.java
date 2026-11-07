@@ -140,6 +140,10 @@ public class SecurityConfig {
             // ── JWT Resource Server (Clerk RS256 tokens) ──
             .oauth2ResourceServer(oauth2 -> oauth2
                 .bearerTokenResolver(request -> {
+                    String uri = request.getRequestURI();
+                    if (uri != null && uri.contains("/api/observations")) {
+                        return null;
+                    }
                     if (SecurityContextHolder.getContext().getAuthentication() instanceof EdgeDeviceAuthentication) {
                         return null;
                     }

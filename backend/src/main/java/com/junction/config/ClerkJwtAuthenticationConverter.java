@@ -1,5 +1,13 @@
 package com.junction.config;
 
+import com.junction.entity.ProfileEntity;
+import com.junction.entity.RestaurantMembershipEntity;
+import com.junction.entity.UserRole;
+import com.junction.repository.ProfileRepository;
+import com.junction.repository.RestaurantMembershipRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,45 +19,39 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * Converts a Clerk-issued JWT into a Spring Security {@link AbstractAuthenticationToken}.
  *
- * <p><strong>Clerk JWT Claim Structure:</strong>
- * <pre>
- * {
- *   "sub":       "user_2abc123...",        // Clerk user ID (maps to profiles.clerk_user_id)
- *   "iss":       "https://your.clerk.accounts.dev",
- *   "iat":       1700000000,
- *   "exp":       1700003600,
- *   "email":     "user@example.com",       // Clerk built-in claim
- *   "metadata":  {                         // Public metadata set by backend on profile creation
- *     "role":    "ORGANIZER"               // Junction domain role (set server-side only)
- *   }
- * }
- * </pre>
- *
- * <p><strong>Authority Mapping:</strong>
+ * <p><strong>CRITICAL SECURITY ARCHITECTURE (PostgreSQL Authoritative RBAC):</strong>
  * <ul>
- *   <li>{@code metadata.role = "ORGANIZER"} → {@code ROLE_ORGANIZER}</li>
- *   <li>{@code metadata.role = "RESTAURANT_PARTNER"} → {@code ROLE_RESTAURANT_PARTNER}</li>
- *   <li>{@code metadata.role = "ATTENDEE"} → {@code ROLE_ATTENDEE}</li>
- *   <li>No role claim → {@code ROLE_ATTENDEE} (least-privilege default)</li>
+ *   <li>The JWT {@code sub} claim contains the Clerk user ID (e.g. {@code user_2abc123...}).</li>
+ *   <li>Domain roles ({@code ORGANIZER}, {@code RESTAURANT_PARTNER}, {@code ATTENDEE}) are
+ *       resolved <strong>strictly and authoritatively from PostgreSQL {@code profiles.role}</strong>.</li>
+ *   <li>Client-controllable JWT claims (e.g., {@code metadata.role}) are <strong>NEVER</strong>
+ *       trusted as an authority grant, preventing privilege escalation.</li>
+ *   <li>If a user has no database profile, they default to {@code ROLE_ATTENDEE} (least-privilege).</li>
+ *   <li>Restaurant memberships are resolved from PostgreSQL {@code restaurant_memberships} and
+ *       granted as scoped authorities (e.g., {@code RESTAURANT_MEMBER_<restaurantId>}).</li>
  * </ul>
- *
- * <p><strong>Security Note:</strong> The role MUST come from server-set public metadata,
- * NOT from any client-controllable claim. The backend verifies roles against the
- * {@code profiles} table on sensitive operations. Never trust client-provided role info.
- *
- * <p>Source of truth: {@code MIGRATION_READINESS_REPORT.md} Section 4 — Clerk JWT → Spring Security.
  */
 @Component
 public class ClerkJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
-    private static final String METADATA_CLAIM = "metadata";
-    private static final String ROLE_CLAIM      = "role";
-    private static final String DEFAULT_ROLE    = "ATTENDEE";
+    private static final Logger log = LoggerFactory.getLogger(ClerkJwtAuthenticationConverter.class);
+    private static final String DEFAULT_ROLE = "ATTENDEE";
+
+    private final ProfileRepository profileRepository;
+    private final RestaurantMembershipRepository membershipRepository;
+
+    public ClerkJwtAuthenticationConverter(
+        @Lazy ProfileRepository profileRepository,
+        @Lazy RestaurantMembershipRepository membershipRepository
+    ) {
+        this.profileRepository = profileRepository;
+        this.membershipRepository = membershipRepository;
+    }
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
@@ -59,45 +61,38 @@ public class ClerkJwtAuthenticationConverter implements Converter<Jwt, AbstractA
 
     private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
         List<GrantedAuthority> authorities = new ArrayList<>();
+        String clerkUserId = jwt.getSubject();
 
-        String role = extractRole(jwt);
-        // Spring Security hasRole("ORGANIZER") checks for "ROLE_ORGANIZER" prefix
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+        if (clerkUserId == null || clerkUserId.isBlank()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + DEFAULT_ROLE));
+            return authorities;
+        }
 
-        return authorities;
-    }
+        // Authoritative resolution from PostgreSQL profiles table
+        Optional<ProfileEntity> profileOpt = profileRepository.findByClerkUserId(clerkUserId);
+        if (profileOpt.isPresent()) {
+            ProfileEntity profile = profileOpt.get();
+            UserRole role = profile.getRole();
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
 
-    /**
-     * Extracts the Junction domain role from the Clerk JWT {@code metadata} claim.
-     *
-     * <p>Falls back to {@code ATTENDEE} if the claim is absent or invalid.
-     * This is the least-privilege default — organizer access requires explicit role assignment.
-     */
-    @SuppressWarnings("unchecked")
-    private String extractRole(Jwt jwt) {
-        try {
-            Object metadataClaim = jwt.getClaim(METADATA_CLAIM);
-            if (metadataClaim instanceof Map<?, ?> metadata) {
-                Object roleClaim = metadata.get(ROLE_CLAIM);
-                if (roleClaim instanceof String role && isValidRole(role)) {
-                    return role;
+            // If restaurant partner, resolve scoped restaurant memberships from DB
+            if (role == UserRole.RESTAURANT_PARTNER || role == UserRole.ORGANIZER) {
+                try {
+                    List<RestaurantMembershipEntity> memberships = membershipRepository.findByProfileId(profile.getId());
+                    for (RestaurantMembershipEntity m : memberships) {
+                        authorities.add(new SimpleGrantedAuthority("RESTAURANT_MEMBER_" + m.getRestaurant().getId()));
+                    }
+                } catch (Exception ex) {
+                    log.warn("Failed to load restaurant memberships for profile {}: {}", profile.getId(), ex.getMessage());
                 }
             }
-        } catch (Exception e) {
-            // Log and fall through to default — do not expose token parsing errors
+        } else {
+            // Profile not yet created in PostgreSQL — assign least-privilege ATTENDEE authority
+            log.debug("No database profile found for Clerk user ID: {}. Defaulting to ROLE_{}", clerkUserId, DEFAULT_ROLE);
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + DEFAULT_ROLE));
         }
-        return DEFAULT_ROLE;
-    }
 
-    /**
-     * Validates that the role string matches one of the Junction domain roles.
-     * Prevents injection of arbitrary Spring Security authorities via JWT claims.
-     */
-    private boolean isValidRole(String role) {
-        return switch (role) {
-            case "ORGANIZER", "RESTAURANT_PARTNER", "ATTENDEE" -> true;
-            default -> false;
-        };
+        return authorities;
     }
 }
 

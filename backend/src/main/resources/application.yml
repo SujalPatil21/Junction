@@ -28,9 +28,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-        # Virtual threads friendly — disable connection acquisition timeout adjustments
-        connection:
-          provider_disables_autocommit: true
         # Batch operations for audit event bulk inserts
         jdbc:
           batch_size: 50
@@ -135,7 +132,7 @@ junction:
     edge-device:
       # Shared secret for edge device API key authentication
       # Devices must send: Authorization: Bearer <JUNCTION_EDGE_DEVICE_SECRET>
-      secret: ${JUNCTION_EDGE_DEVICE_SECRET}
+      secret: ${JUNCTION_EDGE_DEVICE_SECRET:dev-local-secret-not-for-production}
 
   # Domain engine parameters (mirror TypeScript source of truth)
   ingestion:

@@ -32,9 +32,10 @@ spring:
       hibernate:
         format_sql: false
 
-  # ── Flyway — NEVER baseline in production automatically ───
+  # ── Flyway — Production strictly executes schema migrations ONLY (no dev seed) ───
   flyway:
     baseline-on-migrate: false
+    locations: classpath:db/migration
     # To baseline existing DB, run manually:
     # mvn flyway:baseline -Dflyway.url=$DATABASE_URL -Dflyway.user=$DATABASE_USERNAME -Dflyway.password=$DATABASE_PASSWORD
 

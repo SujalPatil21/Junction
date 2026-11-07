@@ -322,6 +322,87 @@ paths:
         '403':
           description: Forbidden (Organizer required)
 
+  /api/auth/me:
+    get:
+      summary: Get currently authenticated user profile and memberships
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user profile and scoped restaurant memberships
+        '401':
+          description: Unauthorized
+        '404':
+          description: Profile not registered in database
+
+  /api/partner/inventory:
+    post:
+      summary: Submit live restaurant inventory (scoped partner endpoint)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - restaurantId
+              properties:
+                restaurantId:
+                  type: string
+                  example: R1
+                availableTables:
+                  type: integer
+                  example: 10
+                availableCovers:
+                  type: integer
+                  example: 25
+                expectedCovers:
+                  type: integer
+                  example: 50
+                outOfOrderTables:
+                  type: integer
+                  example: 0
+                notes:
+                  type: string
+                  example: "Peak surge capacity update"
+      responses:
+        '200':
+          description: Inventory updated successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Partner not assigned to restaurant and not an Organizer)
+
+  /api/hospitality/demand:
+    get:
+      summary: Calculate hospitality demand signals based on egress flow
+      parameters:
+        - name: exitOutflowRate
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 120
+      responses:
+        '200':
+          description: List of hospitality demand signals
+
+  /api/hotspots:
+    get:
+      summary: Detect active hotspots and cascade risks across zones
+      parameters:
+        - name: scenario
+          in: query
+          required: false
+          schema:
+            type: string
+            example: POST_EVENT_SURGE
+      responses:
+        '200':
+          description: Hotspot predictions and cascade propagation analysis
+
 components:
   securitySchemes:
     BearerAuth:

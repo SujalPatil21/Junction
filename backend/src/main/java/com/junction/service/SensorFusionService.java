@@ -96,6 +96,7 @@ public class SensorFusionService {
         List<String> contributingSensors = new ArrayList<>();
         List<String> conflicts = new ArrayList<>();
         boolean hasConflict = false;
+        boolean hasStale = false;
 
         for (NormalizedObservationDto obs : zoneObs) {
             Optional<DeviceDefinitionDto> devOpt = deviceRegistry.get(obs.getSourceId());
@@ -105,6 +106,7 @@ public class SensorFusionService {
             double freshnessWeight = 1.0;
             if ("STALE".equals(obs.getQualityStatus()) || (obs.getFreshnessSeconds() != null && obs.getFreshnessSeconds() > 120)) {
                 freshnessWeight = 0.35;
+                hasStale = true;
             } else if ("DELAYED".equals(obs.getQualityStatus())) {
                 freshnessWeight = 0.75;
             }
@@ -155,7 +157,7 @@ public class SensorFusionService {
             .predictedPressure15(Math.min(99, totalPressure + 5))
             .predictedPressure30(Math.min(99, totalPressure + 10))
             .predictedPressure60(Math.min(99, totalPressure + 14))
-            .dataQuality(hasConflict ? "CONFLICTING" : "FRESH")
+            .dataQuality(hasConflict ? "CONFLICTING" : (hasStale ? "STALE" : "FRESH"))
             .contributingSensors(contributingSensors)
             .missingSensors(missingSensors)
             .conflicts(conflicts)

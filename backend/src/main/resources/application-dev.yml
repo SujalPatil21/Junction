@@ -26,9 +26,10 @@ spring:
       hibernate:
         format_sql: true
 
-  # ── Flyway — allow baseline on fresh local DB ───────────────
+  # ── Flyway — load schema migrations + isolated dev baseline seed ────
   flyway:
     baseline-on-migrate: false
+    locations: classpath:db/migration,classpath:db/seed
 
 # ── Logging — verbose in dev ─────────────────────────────────
 logging:

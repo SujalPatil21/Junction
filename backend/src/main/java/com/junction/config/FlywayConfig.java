@@ -38,9 +38,14 @@ public class FlywayConfig {
     @Bean(initMethod = "migrate")
     public Flyway flyway(DataSource dataSource) {
         log.info("[FlywayConfig] Initializing Flyway migration pipeline on datasource: locations={}, table={}", locations, table);
+        String[] locArray = Arrays.stream(locations.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .toArray(String[]::new);
+
         return Flyway.configure()
             .dataSource(dataSource)
-            .locations(locations)
+            .locations(locArray)
             .baselineOnMigrate(baselineOnMigrate)
             .validateOnMigrate(validateOnMigrate)
             .table(table)

@@ -50,7 +50,7 @@ public class EdgeDeviceAuthenticationFilter extends OncePerRequestFilter {
     private static final String OBSERVATIONS_PATH = "/api/observations";
     private static final String BEARER_PREFIX      = "Bearer ";
 
-    @Value("${junction.security.edge-device.secret}")
+    @Value("${junction.security.edge-device.secret:dev-local-secret-not-for-production}")
     private String edgeDeviceSecret;
 
     @Override
@@ -61,8 +61,13 @@ public class EdgeDeviceAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         // Only process POST /api/observations
-        if (!OBSERVATIONS_PATH.equals(request.getServletPath()) ||
-            !"POST".equalsIgnoreCase(request.getMethod())) {
+        String path = request.getRequestURI();
+        if (path == null) {
+            path = request.getServletPath();
+        }
+        boolean isObservations = path != null && (path.equals(OBSERVATIONS_PATH) || path.equals(OBSERVATIONS_PATH + "/") || path.endsWith("/api/observations"));
+
+        if (!isObservations || !"POST".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }

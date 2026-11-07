@@ -74,6 +74,10 @@ public class ScenarioService {
         return activeScenarioId;
     }
 
+    public ScenarioDto getActiveScenario() {
+        return scenarios.get(activeScenarioId);
+    }
+
     public void setActiveScenarioId(String id) {
         if (!scenarios.containsKey(id)) {
             throw new IllegalArgumentException("Unknown scenario: " + id);

@@ -8,9 +8,12 @@ import com.junction.dto.RestaurantUpdateDto;
 import com.junction.entity.ProfileEntity;
 import com.junction.entity.RestaurantEntity;
 import com.junction.entity.RestaurantInventoryEntity;
+import com.junction.entity.UserRole;
 import com.junction.repository.ProfileRepository;
 import com.junction.repository.RestaurantInventoryRepository;
+import com.junction.repository.RestaurantMembershipRepository;
 import com.junction.repository.RestaurantRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,15 +27,18 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantInventoryRepository inventoryRepository;
     private final ProfileRepository profileRepository;
+    private final RestaurantMembershipRepository membershipRepository;
 
     public RestaurantService(
         RestaurantRepository restaurantRepository,
         RestaurantInventoryRepository inventoryRepository,
-        ProfileRepository profileRepository
+        ProfileRepository profileRepository,
+        RestaurantMembershipRepository membershipRepository
     ) {
         this.restaurantRepository = restaurantRepository;
         this.inventoryRepository = inventoryRepository;
         this.profileRepository = profileRepository;
+        this.membershipRepository = membershipRepository;
     }
 
     public List<RestaurantDto> getAllRestaurants(String zone) {
@@ -99,6 +105,17 @@ public class RestaurantService {
         ProfileEntity reporter = null;
         if (reporterClerkUserId != null) {
             reporter = profileRepository.findByClerkUserId(reporterClerkUserId).orElse(null);
+        }
+
+        // Enforce scoped authorization: Organizers have global access;
+        // Restaurant Partners MUST possess an active membership for this specific venue.
+        if (reporter != null && reporter.getRole() != UserRole.ORGANIZER) {
+            boolean hasMembership = membershipRepository.existsByProfileIdAndRestaurantId(reporter.getId(), restaurantId);
+            if (!hasMembership) {
+                throw new AccessDeniedException("Access denied: You do not have permission to manage restaurant " + restaurantId);
+            }
+        } else if (reporter == null && reporterClerkUserId != null) {
+            throw new AccessDeniedException("Access denied: Unknown user profile for " + reporterClerkUserId);
         }
 
         RestaurantInventoryEntity inv = RestaurantInventoryEntity.builder()
