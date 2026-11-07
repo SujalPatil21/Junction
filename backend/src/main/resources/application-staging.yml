@@ -1,0 +1,80 @@
+# ============================================================
+#  application-staging.yml — Staging Profile (Railway / Docker / Cloud)
+#  Extends application.yml — settings here mirror production
+#  with enhanced diagnostics enabled for pre-production verification.
+# ============================================================
+
+spring:
+  # ── DataSource (Staging PostgreSQL) ────────────────────────
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/junction_staging}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: junction-hikari-staging
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      leak-detection-threshold: 30000
+
+  # ── JPA — Hibernate strictly validates schema ─────────────
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  # ── Flyway — Staging strictly executes schema migrations ONLY (no dev seed) ───
+  flyway:
+    baseline-on-migrate: false
+    locations: classpath:db/migration
+
+# ── Server ──────────────────────────────────────────────────
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
+# ── Logging — structured logging for staging ────────────────
+logging:
+  level:
+    root: INFO
+    com.junction: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO
+
+# ── Actuator — expose health, info & metrics for staging monitoring ───
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+
+# ── Junction Staging Settings ──────────────────────────────
+junction:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://junction-staging.up.railway.app,https://junction-app-staging.vercel.app}
+  security:
+    clerk:
+      jwks-uri: ${CLERK_JWKS_URI:https://dev-placeholder.clerk.accounts.dev/.well-known/jwks.json}
+      issuer-uri: ${CLERK_ISSUER_URI:https://dev-placeholder.clerk.accounts.dev}
+    edge-device:
+      secret: ${JUNCTION_EDGE_DEVICE_SECRET:dev-local-secret-not-for-production}
+
+# ── SpringDoc — Swagger UI enabled for staging API inspection ───
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+

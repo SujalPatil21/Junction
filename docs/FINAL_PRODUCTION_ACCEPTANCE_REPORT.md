@@ -198,16 +198,26 @@ The discrepancy noted in previous documentation has been definitively reconciled
 
 ---
 
-## 9. Infrastructure & Environment Specifications
+### 9. Infrastructure, Profiles & Environment Specifications
 
-1. **PostgreSQL Version Discrepancy Resolution:**
+1. **Dedicated Staging Configuration (`application-staging.yml`):**
+   * *Profile:* `staging` (`--spring.profiles.active=staging`)
+   * *DataSource:* Defaults to `jdbc:postgresql://localhost:5432/junction_staging` or `${DATABASE_URL}`.
+   * *Flyway:* Configured with `locations: classpath:db/migration` (`baseline-on-migrate: false`), strictly excluding dev seeds from staging and production runs.
+   * *JPA / Hibernate:* Configured with `ddl-auto: validate` to guarantee zero unmanaged schema drift.
+   * *Actuator & OpenAPI:* Exposes `/actuator/health`, `/actuator/info`, `/actuator/metrics`, and enables `/swagger-ui.html` and `/v3/api-docs` for pre-production API inspection and smoke-testing.
+   * *CORS:* Configured via `${CORS_ALLOWED_ORIGINS}` supporting local, Railway, and Vercel staging origins.
+
+2. **PostgreSQL Version Discrepancy Resolution:**
    * *Local Test Environment:* PostgreSQL 18.4 (development binary).
    * *Target Production Standard:* **PostgreSQL 16 LTS** (General Availability supported through November 2028).
    * *Compatibility:* Flyway V1 schema uses standard ANSI SQL and PostgreSQL 13+ `gen_random_uuid()`, verified compatible with PostgreSQL 15, 16, 17, and 18. `infrastructure/docker-compose.yml` specifies `postgres:16-alpine`.
-2. **Node.js LTS Classification:**
+
+3. **Node.js LTS Classification:**
    * *Base Image:* `node:22-alpine` in `frontend/Dockerfile`.
    * *Status:* Node.js 22 (Jod) is currently Maintenance LTS (supported through April 2027), fully compatible with Next.js 16.3.4 and React 19.2.8.
-3. **Multi-Service Railway Manifests:**
+
+4. **Multi-Service Railway Manifests:**
    * `infrastructure/railway/railway.json`: Deploys Next.js frontend via `frontend/Dockerfile` with health check on `/`.
    * `infrastructure/railway/railway-backend.json`: Deploys Spring Boot backend via `backend/Dockerfile` with health check on `/api/health`.
 
