@@ -4,6 +4,7 @@ const SPRING_BOOT_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:808
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  agentRules: false,
   async rewrites() {
     return [
       {

@@ -22,3 +22,4 @@ shared/
 
 2. **Presentation Frontend (`frontend`)**:
    At build time (`npm run build` or `npm run prebuild`), the synchronization script (`frontend/scripts/copy-demo-videos.js`) copies the required demonstration video assets into `frontend/public/videos/` for web playback.
+

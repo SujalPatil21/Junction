@@ -1,5 +1,6 @@
 package com.junction.config;
 
+import com.junction.security.EdgeDeviceAuthentication;
 import com.junction.security.EdgeDeviceAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -10,8 +11,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -136,6 +139,12 @@ public class SecurityConfig {
 
             // ── JWT Resource Server (Clerk RS256 tokens) ──
             .oauth2ResourceServer(oauth2 -> oauth2
+                .bearerTokenResolver(request -> {
+                    if (SecurityContextHolder.getContext().getAuthentication() instanceof EdgeDeviceAuthentication) {
+                        return null;
+                    }
+                    return new DefaultBearerTokenResolver().resolve(request);
+                })
                 .jwt(jwt -> jwt
                     .decoder(jwtDecoder)
                     .jwtAuthenticationConverter(clerkJwtAuthenticationConverter)

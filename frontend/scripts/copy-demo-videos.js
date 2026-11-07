@@ -81,3 +81,4 @@ if (fs.existsSync(annotatedVideosDir)) {
 
 const finalVideos = fs.existsSync(targetVideosDir) ? fs.readdirSync(targetVideosDir).filter(f => f.endsWith('.mp4')) : [];
 console.log(`[✔] Video sync complete: ${copiedCount} copied, ${preservedCount} already present (${finalVideos.length} total demo videos available in public/videos).\n`);
+

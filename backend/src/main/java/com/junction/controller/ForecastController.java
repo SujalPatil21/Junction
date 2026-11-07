@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/forecast")
+@RequestMapping({"/api/forecast", "/api/predictions"})
 @Tag(name = "Forecast", description = "Short-horizon crowd surge forecasting")
 public class ForecastController {
 

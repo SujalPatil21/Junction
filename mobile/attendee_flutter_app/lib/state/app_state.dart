@@ -313,6 +313,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
+  void dispose() {
+    BackendScenarioSyncService().stopLiveSync();
+    super.dispose();
+  }
+
   void _addClosedLoopEvent(String log) {
     final now = DateTime.now();
     final timeStr =

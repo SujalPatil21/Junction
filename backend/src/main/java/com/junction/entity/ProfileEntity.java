@@ -38,6 +38,7 @@ public class ProfileEntity {
     @Column(name = "email", nullable = false)
     private String email;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "role", nullable = false, columnDefinition = "user_role")
