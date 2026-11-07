@@ -94,31 +94,40 @@ export const STADIUM_NODES: Record<string, StadiumNode> = {
 
 // ── 3. SPATIAL GRAPH EDGES ─────────────────────────────────────────────────
 export const STADIUM_EDGES: StadiumEdge[] = [
+  // Gate 1 connections
   { from: "NODE_GATE_1", to: "NODE_CONCOURSE_NORTH", distanceMeters: 65, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_GATE_1", to: "NODE_EXIT_4", distanceMeters: 45, isAccessible: true, congestionFactor: 1.1 },
 
+  // Gate 2 connections
   { from: "NODE_GATE_2", to: "NODE_CONCOURSE_NORTH", distanceMeters: 55, isAccessible: true, congestionFactor: 1.2 },
   { from: "NODE_GATE_2", to: "NODE_EXIT_1", distanceMeters: 40, isAccessible: true, congestionFactor: 1.0 },
 
+  // Gate 3 connections
   { from: "NODE_GATE_3", to: "NODE_CONCOURSE_SOUTH", distanceMeters: 60, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_GATE_3", to: "NODE_EXIT_2", distanceMeters: 50, isAccessible: true, congestionFactor: 1.0 },
 
+  // Gate 4 connections
   { from: "NODE_GATE_4", to: "NODE_CONCOURSE_WEST", distanceMeters: 40, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_GATE_4", to: "NODE_EXIT_3", distanceMeters: 35, isAccessible: true, congestionFactor: 1.0 },
 
+  // Gate 5 connections
   { from: "NODE_GATE_5", to: "NODE_CONCOURSE_EAST", distanceMeters: 50, isAccessible: false, congestionFactor: 1.4 },
 
+  // Gate 6 connections
   { from: "NODE_GATE_6", to: "NODE_CONCOURSE_SOUTH", distanceMeters: 55, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_GATE_6", to: "NODE_EXIT_5", distanceMeters: 30, isAccessible: true, congestionFactor: 1.0 },
 
+  // Concourse spine connections
   { from: "NODE_CONCOURSE_NORTH", to: "NODE_CONCOURSE_EAST", distanceMeters: 110, isAccessible: true, congestionFactor: 1.3 },
   { from: "NODE_CONCOURSE_EAST", to: "NODE_CONCOURSE_SOUTH", distanceMeters: 120, isAccessible: true, congestionFactor: 1.1 },
   { from: "NODE_CONCOURSE_SOUTH", to: "NODE_CONCOURSE_WEST", distanceMeters: 115, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_CONCOURSE_WEST", to: "NODE_CONCOURSE_NORTH", distanceMeters: 105, isAccessible: true, congestionFactor: 1.0 },
 
+  // Lifts and Ramps
   { from: "NODE_CONCOURSE_NORTH", to: "NODE_LIFT_NORTH", distanceMeters: 20, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_CONCOURSE_SOUTH", to: "NODE_RAMP_SOUTH", distanceMeters: 25, isAccessible: true, congestionFactor: 1.0 },
 
+  // Block connections from concourses
   { from: "NODE_CONCOURSE_NORTH", to: "NODE_BLOCK_E", distanceMeters: 75, isAccessible: true, congestionFactor: 1.2 },
   { from: "NODE_CONCOURSE_EAST", to: "NODE_BLOCK_D", distanceMeters: 80, isAccessible: true, congestionFactor: 1.1 },
   { from: "NODE_CONCOURSE_EAST", to: "NODE_BLOCK_B", distanceMeters: 70, isAccessible: true, congestionFactor: 1.0 },
@@ -126,11 +135,13 @@ export const STADIUM_EDGES: StadiumEdge[] = [
   { from: "NODE_CONCOURSE_SOUTH", to: "NODE_BLOCK_F", distanceMeters: 60, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_CONCOURSE_WEST", to: "NODE_BLOCK_A", distanceMeters: 55, isAccessible: true, congestionFactor: 1.0 },
 
+  // Accessible Lift connections directly to Blocks
   { from: "NODE_LIFT_NORTH", to: "NODE_BLOCK_E", distanceMeters: 45, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_LIFT_NORTH", to: "NODE_BLOCK_D", distanceMeters: 50, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_RAMP_SOUTH", to: "NODE_BLOCK_C", distanceMeters: 40, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_RAMP_SOUTH", to: "NODE_BLOCK_F", distanceMeters: 35, isAccessible: true, congestionFactor: 1.0 },
 
+  // Block to Seat connections
   { from: "NODE_BLOCK_D", to: "NODE_SEAT_D142", distanceMeters: 40, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_BLOCK_A", to: "NODE_SEAT_A108", distanceMeters: 35, isAccessible: true, congestionFactor: 1.0 },
   { from: "NODE_BLOCK_B", to: "NODE_SEAT_B205", distanceMeters: 45, isAccessible: true, congestionFactor: 1.0 },
@@ -167,6 +178,7 @@ export function findSpatialRoute(
   const endNode = STADIUM_NODES[toNodeId];
   if (!startNode || !endNode) return null;
 
+  // Build adjacency graph
   const adjacency: Record<string, { node: StadiumNode; edge: StadiumEdge }[]> = {};
   Object.keys(STADIUM_NODES).forEach((id) => {
     adjacency[id] = [];
@@ -179,10 +191,12 @@ export function findSpatialRoute(
     const nTo = STADIUM_NODES[edge.to];
     if (nFrom && nTo) {
       adjacency[edge.from].push({ node: nTo, edge });
+      // Undirected pathing across stadium concourses
       adjacency[edge.to].push({ node: nFrom, edge: { ...edge, from: edge.to, to: edge.from } });
     }
   });
 
+  // A* Algorithm
   const openSet = new Set<string>([fromNodeId]);
   const cameFrom: Record<string, string> = {};
   const gScore: Record<string, number> = {};
@@ -197,17 +211,20 @@ export function findSpatialRoute(
   fScore[fromNodeId] = heuristic(startNode, endNode);
 
   while (openSet.size > 0) {
+    // Current node with lowest fScore
     let currentId = Array.from(openSet).reduce((lowest, node) =>
       fScore[node] < fScore[lowest] ? node : lowest
     );
 
     if (currentId === toNodeId) {
+      // Reconstruct path
       const pathNodes: StadiumNode[] = [STADIUM_NODES[currentId]];
       while (cameFrom[currentId]) {
         currentId = cameFrom[currentId];
         pathNodes.unshift(STADIUM_NODES[currentId]);
       }
 
+      // Calculate total distance & steps
       let totalDist = 0;
       for (let i = 0; i < pathNodes.length - 1; i++) {
         const edge = STADIUM_EDGES.find(
@@ -220,8 +237,11 @@ export function findSpatialRoute(
         totalDist += Math.round(dist * weight);
       }
 
+      // Walking speed approx 1.2 m/s (72 m/min)
       const walkSpeedMetersPerMin = routeType === "FASTEST" ? 85 : 70;
       const estimatedMinutes = Math.max(1, Math.ceil(totalDist / walkSpeedMetersPerMin));
+
+      // Human readable step sequence
       const steps = pathNodes.map((n) => n.name);
 
       return {
@@ -253,6 +273,7 @@ export function findSpatialRoute(
     }
   }
 
+  // Fallback direct segment if graph traversal misses
   return {
     path: [startNode, endNode],
     totalDistanceMeters: Math.round(heuristic(startNode, endNode) * 100000),
@@ -269,6 +290,7 @@ function heuristic(a: StadiumNode, b: StadiumNode): number {
   return Math.sqrt(dLng * dLng + dLat * dLat + dAlt * dAlt);
 }
 
+// Find nearest exit from a given start node
 export function findNearestExit(fromNodeId: string): RouteResult | null {
   const exitNodes = Object.values(STADIUM_NODES).filter((n) => n.category === "EXIT");
   let bestRoute: RouteResult | null = null;

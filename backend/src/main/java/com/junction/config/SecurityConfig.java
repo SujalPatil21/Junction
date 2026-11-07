@@ -108,6 +108,10 @@ public class SecurityConfig {
                 // Public — scenario read (attendee Flutter app, unauthenticated map view)
                 .requestMatchers(HttpMethod.GET, "/api/scenarios").permitAll()
 
+                // Public — meteorological telemetry, social signals, nugen domain intelligence & recommendation planning
+                .requestMatchers(HttpMethod.GET, "/api/weather", "/api/social-signals").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/nugen/**", "/api/recommendations/plan").permitAll()
+
                 // Edge device — POST /api/observations (handled by EdgeDeviceAuthenticationFilter)
                 // The filter sets authentication before this rule is evaluated.
                 // We require authentication here; the filter provides EdgeDeviceAuthentication.

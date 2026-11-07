@@ -296,4 +296,49 @@ class ComprehensiveSecurityAndApiControllerTest {
             .andExpect(jsonPath("$.profile.role").value("ATTENDEE"))
             .andExpect(jsonPath("$.isOrganizer").value(false));
     }
+
+    // ── 7. WEATHER, SOCIAL SIGNALS & INTELLIGENCE ENDPOINTS ──────
+
+    @Test
+    @DisplayName("Weather: GET /api/weather returns live meteorological data without auth")
+    void testGetWeatherEndpoint() throws Exception {
+        mockMvc.perform(get("/api/weather"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.weather.temperature").isNumber())
+            .andExpect(jsonPath("$.weather.source").value("OPEN_METEO"));
+    }
+
+    @Test
+    @DisplayName("Signals: GET /api/social-signals returns crowd telemetry signals")
+    void testGetSocialSignalsEndpoint() throws Exception {
+        mockMvc.perform(get("/api/social-signals"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.signals").isArray());
+    }
+
+    @Test
+    @DisplayName("Planning: POST /api/recommendations/plan returns multi-horizon AI plan")
+    void testPostRecommendationsPlan() throws Exception {
+        mockMvc.perform(post("/api/recommendations/plan")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.plan.planId").isString())
+            .andExpect(jsonPath("$.plan.recommendations").isArray());
+    }
+
+    @Test
+    @DisplayName("Nugen: POST /api/nugen/intelligence returns task 2 domain intelligence")
+    void testPostNugenIntelligence() throws Exception {
+        mockMvc.perform(post("/api/nugen/intelligence")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.intelligence.isAvailable").value(true))
+            .andExpect(jsonPath("$.intelligence.baseModelUsed").value("meta-llama/Llama-3.1-8B-Instruct"));
+    }
 }

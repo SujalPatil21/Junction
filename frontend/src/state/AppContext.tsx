@@ -11,8 +11,11 @@ import {
   SimulationSpeed,
   SimulationParams,
   ZoneState,
+  ActiveIntervention,
+  ZoneBaselineSnapshot,
 } from "@/types";
 import { MOCK_RECOMMENDATIONS } from "@/data/mockRecommendations";
+import { SCENARIOS } from "@/data/mockScenarios";
 import { getHotels, getResources, getScenarioKPIs, getAlerts } from "@/services/mockDataService";
 import { getPressureLevel } from "@/data/mockResources";
 import { createInitialSimulationState, nextSimulationState, calculateOutflowRate } from "@/services/simulationEngine";
@@ -23,6 +26,15 @@ import { ingestionPipeline } from "@/services/ingestionPipeline";
 import { sensorFusionEngine } from "@/services/sensorFusionEngine";
 import { hotspotAndCascadeEngine } from "@/services/hotspotAndCascadeEngine";
 import { recommendationLifecycleEngine } from "@/services/recommendationLifecycleEngine";
+import { aiRecommendationPlanner } from "@/services/aiRecommendationPlanner";
+import {
+  WeatherState,
+  SocialSignal,
+  WeatherTwinParams,
+  WeatherImpactResult,
+} from "@/types/weather";
+import { weatherImpactModel } from "@/services/weatherImpactModel";
+import { NugenOperationalIntelligence } from "@/services/nugenService";
 import { junctionApi } from "@/lib/api-client/junctionApi";
 
 interface AppContextValue {
@@ -30,8 +42,18 @@ interface AppContextValue {
   activeScenario: ScenarioId;
   setScenario: (s: ScenarioId) => void;
 
-  // Recommendations
+  // Action Status & Toast Notification
+  actionStatus: { message: string; type: "success" | "info" | "error"; timestamp: number } | null;
+  clearActionStatus: () => void;
+  setActionStatus: (status: { message: string; type: "success" | "info" | "error" } | null) => void;
+
+  // Recommendations & AI Planner
   recommendations: Recommendation[];
+  recommendationSource: "AI" | "CACHED_AI" | "DETERMINISTIC_FALLBACK";
+  aiPlanSummary: string;
+  aiModelUsed?: string;
+  isGeneratingAiPlan: boolean;
+  regenerateAiRecommendations: () => Promise<void>;
   approveRecommendation: (id: string) => void;
   rejectRecommendation: (id: string) => void;
   isRecommendationApproved: (id: string) => boolean;
@@ -78,6 +100,7 @@ interface AppContextValue {
   hotspots: import("@/types").HotspotPrediction[];
   cascadeResult: import("@/types").CascadeAnalysisResult | null;
   interventions: import("@/types").OperationalIntervention[];
+  activeInterventions: import("@/types").ActiveIntervention[];
   auditRecords: import("@/types").AuditRecord[];
 
   // Sensor Fault Simulation Controls (Interactive Evaluation)
@@ -92,13 +115,59 @@ interface AppContextValue {
   resetFaultInjections: () => void;
   selectedEvidenceZoneId: string;
   setSelectedEvidenceZoneId: (zoneId: string) => void;
+
+  // Weather Digital Twin Layer (HackCelestial Task 1)
+  weatherState: WeatherState | null;
+  weatherLoading: boolean;
+  weatherError: string | null;
+  refreshWeather: () => Promise<void>;
+  socialSignals: SocialSignal[];
+  weatherTwinParams: WeatherTwinParams;
+  setWeatherTwinParams: (p: Partial<WeatherTwinParams>) => void;
+  weatherImpact: WeatherImpactResult | null;
+  weatherScenarioActive: boolean;
+  runWeatherTwin: (customParams?: Partial<WeatherTwinParams>) => void;
+  resetWeatherTwin: () => void;
+  weatherAdjustedZones: ZoneState[];
+
+  // Nugen Intelligence Layer (HackCelestial Task 2)
+  nugenIntelligence: NugenOperationalIntelligence | null;
+  isFetchingNugen: boolean;
+  fetchNugenIntelligence: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [activeScenario, setActiveScenario] = useState<ScenarioId>("NORMAL");
+  const [actionStatus, setActionStatusState] = useState<{ message: string; type: "success" | "info" | "error"; timestamp: number } | null>(null);
+
+  const setActionStatus = useCallback((status: { message: string; type: "success" | "info" | "error" } | null) => {
+    if (status) {
+      setActionStatusState({ ...status, timestamp: Date.now() });
+    } else {
+      setActionStatusState(null);
+    }
+  }, []);
+
+  const clearActionStatus = useCallback(() => {
+    setActionStatusState(null);
+  }, []);
+
+  useEffect(() => {
+    if (!actionStatus) return;
+    const timer = setTimeout(() => {
+      setActionStatusState(null);
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [actionStatus]);
+
   const [recommendations, setRecommendations] = useState<Recommendation[]>(MOCK_RECOMMENDATIONS);
+  const [recommendationSource, setRecommendationSource] = useState<"AI" | "CACHED_AI" | "DETERMINISTIC_FALLBACK">("AI");
+  const [aiPlanSummary, setAiPlanSummary] = useState<string>("Synthesizing live operational intelligence...");
+  const [aiModelUsed, setAiModelUsed] = useState<string | undefined>("gemini-3.8-flash");
+  const [isGeneratingAiPlan, setIsGeneratingAiPlan] = useState<boolean>(false);
+
   const [attendeeSelectedRouteId, setAttendeeSelectedRouteId] = useState<string | null>(null);
   const [hotelOverrides, setHotelOverrides] = useState<Record<string, Partial<Hotel>>>({});
   const [selectedEvidenceZoneId, setSelectedEvidenceZoneId] = useState<string>("ZONE_CHURCHGATE");
@@ -124,87 +193,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
     transportDisruption: false,
   });
 
+  // Active Approved Interventions for Live Operational Simulation
+  const [activeInterventions, setActiveInterventions] = useState<ActiveIntervention[]>([]);
+
   // Pure Domain Simulation State
   const [simulationState, setSimulationState] = useState<SimulationState>(() =>
     createInitialSimulationState(activeScenario, simParams.attendance)
   );
 
-  // Fetch authoritative active scenario, recommendations, zones & forecasts from Spring Boot on mount
+  // Fetch authoritative active scenario from backend on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // 1. Authoritative active scenario
-      junctionApi.scenarios.getAll()
+      fetch("/api/scenarios")
+        .then((res) => res.json())
         .then((data) => {
-          if (data && data.activeScenario) {
+          if (data.success && data.activeScenario) {
             setActiveScenario(data.activeScenario);
             setSimulationState(createInitialSimulationState(data.activeScenario, 33000));
           }
         })
         .catch(() => {});
-
-      // 2. Authoritative recommendations
-      junctionApi.recommendations.getAll()
-        .then((data) => {
-          if (Array.isArray(data) && data.length > 0) {
-            const mapped: Recommendation[] = data.map((d: any) => {
-              const defaultImpact = [
-                {
-                  resourceName: d.targetZoneId ? d.targetZoneId.replace("ZONE_", "").replace(/_/g, " ") : "Churchgate",
-                  before: 94,
-                  after: Math.max(20, 94 - (d.expectedPressureReductionPercent || 18)),
-                },
-                {
-                  resourceName: "Dadar",
-                  before: 58,
-                  after: 69,
-                },
-              ];
-
-              return {
-                id: d.id,
-                type: (d.type === "PEDESTRIAN_DIVERSION" ? "REDISTRIBUTE" : d.type || "REDISTRIBUTE") as any,
-                confidence: (d.confidenceScore >= 0.8 ? "HIGH" : d.confidenceScore >= 0.5 ? "MEDIUM" : "LOW") as any,
-                title: d.title || d.actionSummary || d.actionTitle || "Operational Intervention",
-                problem: d.problem || d.problemDescription || d.description || d.rationale || "Destination capacity pressure",
-                action: d.action || d.actionSummary || d.title || "Redistribute crowd",
-                reason: d.reason || d.rationale || "Bottleneck mitigation and crowd safety",
-                tradeOff: d.tradeOff || "Additional walking time",
-                expectedImpact: Array.isArray(d.expectedImpact) && d.expectedImpact.length > 0 ? d.expectedImpact : defaultImpact,
-                status: (d.status === "APPROVED" || d.status === "REJECTED" ? d.status : "PENDING") as "PENDING" | "APPROVED" | "REJECTED",
-                source: "SIMULATED",
-                affectsAttendee: d.affectsAttendee ?? true,
-                attendeeMessage: d.attendeeMessage || "Alternative route recommended due to high venue transit pressure.",
-                priority: d.priority || 1,
-              };
-            });
-            setRecommendations(mapped);
-          }
-        })
-        .catch(() => {});
-
-      // 3. Authoritative forecasts
-      junctionApi.forecast.getAll().catch(() => {});
-
-      // 4. Authoritative operational zones
-      junctionApi.zones.getAll().catch(() => {});
     }
   }, []);
 
   // Play / Pause / Reset / Speed Controls
   const playSimulation = useCallback(() => {
-    setSimulationState(prev => ({ ...prev, status: "PLAYING" }));
-  }, []);
+    setSimulationState(prev => {
+      if (prev.status === "PLAYING") return prev;
+      if (prev.status === "COMPLETE") {
+        const initial = createInitialSimulationState(activeScenario, simParams.attendance);
+        return { ...initial, status: "PLAYING" };
+      }
+      return { ...prev, status: "PLAYING" };
+    });
+  }, [activeScenario, simParams.attendance]);
 
   const pauseSimulation = useCallback(() => {
-    setSimulationState(prev => ({ ...prev, status: "PAUSED" }));
+    setSimulationState(prev => {
+      if (prev.status !== "PLAYING") return prev;
+      return { ...prev, status: "PAUSED" };
+    });
   }, []);
 
   const resetSimulation = useCallback(() => {
+    setActiveInterventions([]);
     setSimulationState(createInitialSimulationState(activeScenario, simParams.attendance));
   }, [activeScenario, simParams.attendance]);
 
   const setSimulationSpeed = useCallback((speed: SimulationSpeed) => {
-    setSimulationState(prev => ({ ...prev, speed }));
+    setSimulationState(prev => {
+      if (prev.speed === speed) return prev;
+      return { ...prev, speed };
+    });
   }, []);
 
   const updateSimParams = useCallback((p: Partial<SimulationParams>) => {
@@ -228,37 +268,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setScenario = useCallback((s: ScenarioId) => {
     setActiveScenario(s);
     setAttendeeSelectedRouteId(null);
-    setRecommendations(MOCK_RECOMMENDATIONS.map(r => ({ ...r, status: "PENDING" as const })));
     setHotelOverrides({});
+    setActiveInterventions([]);
     setSimulationState(createInitialSimulationState(s, simParams.attendance));
 
-    // Synchronize to unified Spring Boot backend API on port 8080
+    const label = SCENARIOS[s]?.label || s;
+
+    // Synchronize to unified backend API so mobile clients instantly receive update
     if (typeof window !== "undefined") {
       junctionApi.scenarios.setActive(s).catch(() => {});
+      fetch("/api/scenarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scenarioId: s }),
+      })
+        .then(async res => {
+          if (res.ok) {
+            setActionStatus({
+              message: `Active Scenario switched to '${label}'. Backend synchronized successfully.`,
+              type: "success",
+            });
+          } else {
+            setActionStatus({
+              message: `Active Scenario switched to '${label}' (Backend sync HTTP ${res.status}).`,
+              type: "info",
+            });
+          }
+        })
+        .catch(() => {
+          setActionStatus({
+            message: `Active Scenario switched to '${label}'.`,
+            type: "success",
+          });
+        });
     }
-  }, [simParams.attendance]);
-
-  const approveRecommendation = useCallback((id: string) => {
-    setRecommendations(prev =>
-      prev.map(r => r.id === id ? { ...r, status: "APPROVED" as const } : r)
-    );
-    if (typeof window !== "undefined") {
-      junctionApi.recommendations.approve(id).catch(() => {});
-    }
-  }, []);
-
-  const rejectRecommendation = useCallback((id: string) => {
-    setRecommendations(prev =>
-      prev.map(r => r.id === id ? { ...r, status: "REJECTED" as const } : r)
-    );
-    if (typeof window !== "undefined") {
-      junctionApi.recommendations.reject(id).catch(() => {});
-    }
-  }, []);
-
-  const isRecommendationApproved = useCallback((id: string) => {
-    return recommendations.find(r => r.id === id)?.status === "APPROVED";
-  }, [recommendations]);
+  }, [simParams.attendance, setActionStatus]);
 
   const selectAttendeeRoute = useCallback((id: string) => {
     setAttendeeSelectedRouteId(id);
@@ -291,14 +335,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return getHotels(activeScenario, hotelOverrides);
   }, [activeScenario, hotelOverrides]);
 
-  // REC1 affects attendees (redistribute Churchgate -> Dadar)
-  const rec1Approved = recommendations.find(r => r.id === "REC1")?.status === "APPROVED";
-  const hasAttendeeRecommendation = rec1Approved;
-  const attendeeRecommendationMessage = rec1Approved
-    ? "Churchgate pressure is rising. Dadar Station offers a better journey with only 8 minutes extra travel time."
+  // Active approved recommendation dynamically determines attendee message
+  const activeApprovedRec = useMemo(() => {
+    return recommendations.filter(r => r.status === "ACTIVE" || r.status === "APPROVED").pop() || null;
+  }, [recommendations]);
+
+  const hasAttendeeRecommendation = Boolean(activeApprovedRec);
+  const attendeeRecommendationMessage = activeApprovedRec
+    ? (activeApprovedRec.attendeeMessage || activeApprovedRec.action || activeApprovedRec.title)
     : "";
 
-  // If attendee selected BALANCED route and rec1 is approved, redistribution is applied
+  const rec1Approved = (activeApprovedRec?.id === "REC1" || activeApprovedRec?.type === "REDISTRIBUTE" || activeApprovedRec?.actionType === "REROUTE_ATTENDEES") ?? false;
+
+  // If attendee selected BALANCED route and redistribution rec is active, redistribution is applied
   const redistributionApplied = rec1Approved && attendeeSelectedRouteId === "BALANCED";
 
   const redistributionImpact: RedistributionImpact | null = useMemo(() => {
@@ -315,21 +364,89 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, [redistributionApplied]);
 
+  // Periodic background polling (3s) to keep attendee web views synced with backend approvals in real-time
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const pollSync = async () => {
+      try {
+        const res = await fetch("/api/attendee/state");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success) {
+          if (data.scenario?.id && data.scenario.id !== activeScenario) {
+            setActiveScenario(data.scenario.id);
+          }
+          if (Array.isArray(data.approvedRecommendations) && data.approvedRecommendations.length > 0) {
+            const latestBackendRec = data.approvedRecommendations[data.approvedRecommendations.length - 1];
+            setRecommendations(prev => {
+              const matched = prev.find(r => r.id === latestBackendRec.id);
+              if (matched && (matched.status === "ACTIVE" || matched.status === "APPROVED")) {
+                return prev;
+              }
+              if (matched) {
+                return prev.map(r => r.id === latestBackendRec.id ? { ...r, status: "ACTIVE" as const } : r);
+              }
+              return [
+                ...prev,
+                {
+                  id: latestBackendRec.id,
+                  type: latestBackendRec.type || "TRANSPORT",
+                  title: latestBackendRec.title,
+                  problem: "Operational pressure condition",
+                  action: latestBackendRec.action || latestBackendRec.message,
+                  reason: "Optimizing destination flow",
+                  expectedImpact: [{ resourceName: "Corridor", before: 85, after: 65 }],
+                  tradeOff: "Standard route timing adjustment",
+                  confidence: "HIGH",
+                  source: "SIMULATED",
+                  status: "ACTIVE",
+                  affectsAttendee: true,
+                  attendeeMessage: latestBackendRec.message,
+                  priority: 1,
+                },
+              ];
+            });
+          }
+        }
+      } catch (_) {}
+    };
+
+    const interval = setInterval(pollSync, 3000);
+    return () => clearInterval(interval);
+  }, [activeScenario]);
+
   // Controlled Simulation Ticker Loop
   // Fires at a controlled cadence (800ms) when status is PLAYING.
-  // Advances simulation time by (1 * speed) simulated minutes per tick.
+  // Advances simulation time by (1 * speed) simulated minutes per tick, passing all active interventions.
   useEffect(() => {
     if (simulationState.status !== "PLAYING") return;
 
     const timer = setInterval(() => {
       setSimulationState(prev => {
         if (prev.status !== "PLAYING") return prev;
+
+        const delta = 1 * prev.speed;
+        const targetMinutes = prev.minutesElapsed + delta;
+
+        // Completion boundary check at 60 minutes
+        if (targetMinutes >= 60) {
+          const stepDelta = Math.max(0, 60 - prev.minutesElapsed);
+          const finalState = stepDelta > 0
+            ? nextSimulationState(prev, stepDelta, activeScenario, simParams.attendance, activeInterventions)
+            : prev;
+          return {
+            ...finalState,
+            status: "COMPLETE",
+          };
+        }
+
         return nextSimulationState(
           prev,
-          1 * prev.speed,
+          delta,
           activeScenario,
           simParams.attendance,
-          redistributionApplied
+          activeInterventions
         );
       });
     }, 800);
@@ -340,7 +457,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     simulationState.speed,
     activeScenario,
     simParams.attendance,
-    redistributionApplied,
+    activeInterventions,
   ]);
 
   // Dynamic destination resources (reflecting scenario + attendee redistribution + live simulation loads)
@@ -467,6 +584,143 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [zones]
   );
 
+  const approveRecommendation = useCallback((id: string) => {
+    const rec = recommendations.find(r => r.id === id);
+    if (!rec) return;
+
+    // 1. Capture immutable baseline snapshot of all zones at approval time
+    const baselines: Record<string, ZoneBaselineSnapshot> = {};
+    zones.forEach(z => {
+      baselines[z.id] = {
+        zoneId: z.id,
+        zoneName: z.name,
+        pressure: z.pressure,
+        density: z.density || 0,
+        currentUtilization: z.currentUtilization,
+        inflowRate: z.inflowRate,
+        outflowRate: z.outflowRate,
+        timestamp: new Date().toISOString(),
+      };
+    });
+
+    const approvedAt = Date.now();
+    const actionType: any = rec.actionType || (rec.type === "REDISTRIBUTE" ? "REROUTE_ATTENDEES" : rec.type === "TRANSPORT" ? "ADD_TRANSIT_SHUTTLES" : "REROUTE_ATTENDEES");
+
+    const newIntervention: ActiveIntervention = {
+      id: `ACT_INT_${rec.id}_${approvedAt}`,
+      recommendationId: rec.id,
+      type: actionType,
+      actionType,
+      title: rec.title,
+      description: rec.action,
+      status: "ACTIVE",
+      approvedAt,
+      approvedAtSimulationMinute: simulationState.minutesElapsed,
+      durationMinutes: rec.timeHorizonMinutes || 30,
+      rampDurationSeconds: 15,
+      intensity: 1.0,
+      baselines,
+    };
+
+    setActiveInterventions(prev => [...prev.filter(i => i.recommendationId !== id), newIntervention]);
+
+    setRecommendations(prev =>
+      prev.map(r => r.id === id ? { ...r, status: "ACTIVE" as const, approvedAt, baselines } : r)
+    );
+
+    // Log approval in lifecycle engine & persistence audit trail
+    recommendationLifecycleEngine.recordDecision(
+      id,
+      "APPROVE",
+      "USER_ORGANIZER_01",
+      "ORGANIZER"
+    );
+
+    // Synchronize approval with backend API so Flutter attendee app updates in real-time
+    if (typeof window !== "undefined") {
+      junctionApi.recommendations.approve(id).catch(() => {});
+      fetch(`/api/recommendations/${encodeURIComponent(id)}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          actorId: "USER_ORGANIZER_01",
+          recommendation: {
+            id: rec.id,
+            title: rec.title,
+            action: rec.action,
+            attendeeMessage: rec.attendeeMessage || rec.action,
+            type: rec.type,
+            routeId: rec.type === "REDISTRIBUTE" ? "BALANCED" : "FASTEST",
+          },
+        }),
+      })
+        .then(async res => {
+          if (res.ok) {
+            const data = await res.json();
+            setActionStatus({
+              message: data.message || `Intervention '${rec.title}' successfully approved & published.`,
+              type: "success",
+            });
+          } else {
+            setActionStatus({
+              message: `Intervention '${rec.title}' approved locally (Backend response: HTTP ${res.status}).`,
+              type: "info",
+            });
+          }
+        })
+        .catch(() => {
+          setActionStatus({
+            message: `Intervention '${rec.title}' approved & active in system.`,
+            type: "success",
+          });
+        });
+
+      if (id === "REC1" || rec.type === "REDISTRIBUTE" || rec.actionType === "REROUTE_ATTENDEES") {
+        fetch("/api/scenarios", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isRec1Approved: true }),
+        }).catch(() => {});
+      }
+    }
+  }, [recommendations, zones, simulationState.minutesElapsed, setActionStatus]);
+
+  const rejectRecommendation = useCallback((id: string) => {
+    const targetRec = recommendations.find(r => r.id === id);
+    setActiveInterventions(prev => prev.filter(i => i.recommendationId !== id));
+    setRecommendations(prev =>
+      prev.map(r => r.id === id ? { ...r, status: "REJECTED" as const } : r)
+    );
+    // Log rejection in lifecycle engine & persistence audit trail
+    recommendationLifecycleEngine.recordDecision(
+      id,
+      "REJECT",
+      "USER_ORGANIZER_01",
+      "ORGANIZER"
+    );
+
+    setActionStatus({
+      message: `Intervention '${targetRec?.title || id}' rejected and dismissed.`,
+      type: "info",
+    });
+
+    if (typeof window !== "undefined") {
+      junctionApi.recommendations.reject(id).catch(() => {});
+    }
+    if (typeof window !== "undefined" && id === "REC1") {
+      fetch("/api/scenarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isRec1Approved: false }),
+      }).catch(() => {});
+    }
+  }, [recommendations, setActionStatus]);
+
+  const isRecommendationApproved = useCallback((id: string) => {
+    const rec = recommendations.find(r => r.id === id);
+    return rec?.status === "APPROVED" || rec?.status === "ACTIVE";
+  }, [recommendations]);
+
   // Dynamic alerts
   const alerts = useMemo(() => {
     const baseAlerts = getAlerts(activeScenario);
@@ -534,10 +788,212 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return recommendationLifecycleEngine.getAuditTrail();
   }, [recommendations]);
 
+  // AI Recommendation Planner Synchronizer
+  const fetchAiPlan = useCallback(async (force = false) => {
+    if (zones.length === 0) return;
+    setIsGeneratingAiPlan(true);
+    try {
+      const context = aiRecommendationPlanner.buildContext(
+        activeScenario,
+        zones,
+        resources,
+        hotspots,
+        cascadeResult,
+        interventions,
+        simulationState,
+        redistributionApplied
+      );
+      const plan = await aiRecommendationPlanner.getOrFetchPlan(context, force);
+      if (plan && plan.recommendations && plan.recommendations.length > 0) {
+        setRecommendations(prev => {
+          const approvedSet = new Set(prev.filter(r => r.status === "APPROVED").map(r => r.id));
+          const rejectedSet = new Set(prev.filter(r => r.status === "REJECTED").map(r => r.id));
+
+          return plan.recommendations.map(newRec => ({
+            ...newRec,
+            status: approvedSet.has(newRec.id) ? "APPROVED" : (rejectedSet.has(newRec.id) ? "REJECTED" : newRec.status),
+          }));
+        });
+        setRecommendationSource(plan.source);
+        setAiPlanSummary(plan.planSummary);
+        if (plan.modelUsed) {
+          setAiModelUsed(plan.modelUsed);
+        }
+      }
+    } catch (err) {
+      console.warn("[AppContext] AI plan fetch failed:", err);
+    } finally {
+      setIsGeneratingAiPlan(false);
+    }
+  }, [activeScenario, zones, resources, hotspots, cascadeResult, interventions, simulationState.minutesElapsed, redistributionApplied]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-fetch on scenario shift or new hotspot detection
+  useEffect(() => {
+    fetchAiPlan(false);
+  }, [activeScenario, hotspots.length, redistributionApplied]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const regenerateAiRecommendations = useCallback(async () => {
+    await fetchAiPlan(true);
+  }, [fetchAiPlan]);
+
+  // ── Weather Digital Twin Layer (HackCelestial Task 1) ───────────────────────
+  const [weatherState, setWeatherState] = useState<WeatherState | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState<boolean>(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [socialSignals, setSocialSignals] = useState<SocialSignal[]>([]);
+  const [weatherScenarioActive, setWeatherScenarioActive] = useState<boolean>(false);
+  const [weatherImpact, setWeatherImpact] = useState<WeatherImpactResult | null>(null);
+  const [weatherTwinParams, setWeatherTwinParamsState] = useState<WeatherTwinParams>({
+    rainfallIntensity: 25, // mm/h
+    rainfallDuration: 45, // min
+    temperature: 28,
+    windSpeed: 22,
+    affectedArea: "WANKHEDE_CORRIDOR",
+  });
+
+  const refreshWeather = useCallback(async () => {
+    setWeatherLoading(true);
+    setWeatherError(null);
+    try {
+      const res = await fetch("/api/weather?refresh=true");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.weather) {
+          setWeatherState(data.weather);
+        }
+      } else {
+        setWeatherError("Weather endpoint returned non-200");
+      }
+    } catch (err) {
+      console.warn("[AppContext] Weather refresh failed:", err);
+      setWeatherError((err as Error).message);
+    } finally {
+      setWeatherLoading(false);
+    }
+
+    // Refresh social signals
+    try {
+      const sRes = await fetch("/api/social-signals");
+      if (sRes.ok) {
+        const sData = await sRes.json();
+        if (Array.isArray(sData.signals)) {
+          setSocialSignals(sData.signals);
+        }
+      }
+    } catch (err) {
+      console.warn("[AppContext] Social signals fetch failed:", err);
+    }
+  }, []);
+
+  // Initial fetch and 5-minute periodic auto-refresh
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      refreshWeather();
+      const interval = setInterval(refreshWeather, 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [refreshWeather]);
+
+  const setWeatherTwinParams = useCallback((p: Partial<WeatherTwinParams>) => {
+    setWeatherTwinParamsState(prev => ({ ...prev, ...p }));
+  }, []);
+
+  const runWeatherTwin = useCallback((customParams?: Partial<WeatherTwinParams>) => {
+    const paramsToRun = { ...weatherTwinParams, ...customParams };
+    if (customParams) {
+      setWeatherTwinParamsState(paramsToRun);
+    }
+    const impact = weatherImpactModel.evaluateImpact(paramsToRun, zones, []);
+    setWeatherImpact(impact);
+    setWeatherScenarioActive(true);
+  }, [weatherTwinParams, zones]);
+
+  const resetWeatherTwin = useCallback(() => {
+    setWeatherScenarioActive(false);
+    setWeatherImpact(null);
+  }, []);
+
+  // Weather-adjusted zone states: purely hypothetical projection, leaving baseline zones intact
+  const weatherAdjustedZones = useMemo((): ZoneState[] => {
+    if (!weatherScenarioActive || !weatherImpact) {
+      return zones;
+    }
+    return zones.map(zone => {
+      const deltaObj = weatherImpact.affectedZoneDeltas[zone.id];
+      if (!deltaObj) return zone;
+
+      const adjustedPressure = deltaObj.weatherAdjustedPressure;
+      const pressureRatio = adjustedPressure / Math.max(1, zone.pressure);
+
+      return {
+        ...zone,
+        pressure: adjustedPressure,
+        predictedPressure15: Math.min(99, Math.round(zone.predictedPressure15 * pressureRatio)),
+        predictedPressure30: Math.min(99, Math.round(zone.predictedPressure30 * pressureRatio)),
+        predictedPressure60: Math.min(99, Math.round(zone.predictedPressure60 * pressureRatio)),
+        pressureLevel:
+          adjustedPressure >= 90
+            ? "CRITICAL"
+            : adjustedPressure >= 75
+            ? "HIGH"
+            : adjustedPressure >= 50
+            ? "WATCH"
+            : "NORMAL",
+        inflowRate: Math.round(zone.inflowRate * weatherImpact.walkingSpeedMultiplier),
+      };
+    });
+  }, [zones, weatherScenarioActive, weatherImpact]);
+
+  // ── Nugen Domain Intelligence Layer (HackCelestial Task 2) ───────────────────
+  const [nugenIntelligence, setNugenIntelligence] = useState<NugenOperationalIntelligence | null>(null);
+  const [isFetchingNugen, setIsFetchingNugen] = useState<boolean>(false);
+
+  const fetchNugenIntelligence = useCallback(async () => {
+    setIsFetchingNugen(true);
+    try {
+      const res = await fetch("/api/nugen/intelligence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          activeScenario,
+          simulationMinutes: simulationState.minutesElapsed,
+          zones,
+          resources,
+          hotspots,
+          weather: weatherState
+            ? {
+                condition: weatherState.condition,
+                tempC: weatherState.temperature,
+                rainRateMmHr: weatherState.rainfall,
+                walkSpeedMps: 1.2,
+              }
+            : undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.intelligence) {
+          setNugenIntelligence(data.intelligence);
+        }
+      }
+    } catch (err) {
+      console.warn("[AppContext] Nugen intelligence fetch failed:", err);
+    } finally {
+      setIsFetchingNugen(false);
+    }
+  }, [activeScenario, simulationState.minutesElapsed, zones, resources, hotspots, weatherState]);
+
+  // Initial fetch on mount & whenever scenario changes
+  useEffect(() => {
+    fetchNugenIntelligence();
+  }, [activeScenario, hotspots.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <AppContext.Provider value={{
       activeScenario, setScenario,
-      recommendations, approveRecommendation, rejectRecommendation, isRecommendationApproved,
+      actionStatus, clearActionStatus, setActionStatus,
+      recommendations, recommendationSource, aiPlanSummary, aiModelUsed, isGeneratingAiPlan, regenerateAiRecommendations,
+      approveRecommendation, rejectRecommendation, isRecommendationApproved,
       attendeeSelectedRouteId, selectAttendeeRoute,
       hasAttendeeRecommendation, attendeeRecommendationMessage,
       redistributionApplied, redistributionImpact,
@@ -546,9 +1002,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       simulationState, playSimulation, pauseSimulation, resetSimulation, setSimulationSpeed,
       simParams, updateSimParams,
       zones, getZoneState,
-      devices, latestObservations, hotspots, cascadeResult, interventions, auditRecords,
+      devices, latestObservations, hotspots, cascadeResult, interventions, activeInterventions, auditRecords,
       faultInjections, toggleDeviceOutage, toggleDeviceLag, toggleDeviceConflict, resetFaultInjections,
       selectedEvidenceZoneId, setSelectedEvidenceZoneId,
+      weatherState, weatherLoading, weatherError, refreshWeather, socialSignals,
+      weatherTwinParams, setWeatherTwinParams, weatherImpact, weatherScenarioActive,
+      runWeatherTwin, resetWeatherTwin, weatherAdjustedZones,
+      nugenIntelligence, isFetchingNugen, fetchNugenIntelligence,
     }}>
       {children}
     </AppContext.Provider>

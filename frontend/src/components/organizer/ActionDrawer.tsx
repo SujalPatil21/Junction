@@ -3,6 +3,8 @@
 import React from "react";
 import { Recommendation } from "@/types";
 import ConfidenceBadge from "@/components/ui/ConfidenceBadge";
+import NugenDomainIntelligenceCard from "@/components/organizer/NugenDomainIntelligenceCard";
+import { useApp } from "@/state/AppContext";
 
 interface ActionDrawerProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ export default function ActionDrawer({
   isApproved,
   onOpenSimulation,
 }: ActionDrawerProps) {
+  const { nugenIntelligence, isFetchingNugen, fetchNugenIntelligence } = useApp();
   if (!isOpen || !recommendation) return null;
 
   return (
@@ -212,6 +215,15 @@ export default function ActionDrawer({
             }}
           >
             <strong style={{ color: "var(--ink)" }}>Operational Trade-Off:</strong> {recommendation.tradeOff}
+          </div>
+
+          {/* Section: Nugen Domain Intelligence (Task 2) */}
+          <div>
+            <NugenDomainIntelligenceCard
+              intelligence={nugenIntelligence}
+              isLoading={isFetchingNugen}
+              onRefresh={fetchNugenIntelligence}
+            />
           </div>
 
           {/* Section: Attendee Broadcast Message */}
