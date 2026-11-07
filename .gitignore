@@ -82,7 +82,7 @@ cv_bridge/artifacts/annotated-videos/*.mp4
 !cv_bridge/artifacts/annotated-videos/annotated_venue_entrance_validation.mp4
 cv_bridge/artifacts/observations/*.tmp
 
-# AI coding assistant configurations
-.claude/
-.rocketride/
-rocketride/
+# AI Coding Assistant Configurations
+/.claude/
+/.rocketride/
+/rocketride/
