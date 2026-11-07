@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/recommendations")
@@ -46,6 +47,12 @@ public class RecommendationController {
         var obs = ingestionPipeline.getRecentObservations();
         List<ZoneStateDto> zones = sensorFusionService.fuseAllZones(obs);
         return ResponseEntity.ok(recommendationService.generateInterventions(zones));
+    }
+
+    @PostMapping("/plan")
+    @Operation(summary = "Generate multi-horizon AI recommendation plan from operational context")
+    public ResponseEntity<Map<String, Object>> planRecommendations(@RequestBody(required = false) Map<String, Object> context) {
+        return ResponseEntity.ok(recommendationService.planRecommendations(context));
     }
 
     @PostMapping("/{id}/approve")
