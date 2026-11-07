@@ -22,9 +22,9 @@ Junction-App/
 │   └── schemas/
 ├── infrastructure/           # Docker Compose, Railway configs, deployment guides
 ├── scripts/                  # Unified Repository Automation (testing, utilities, dev)
-├── assets/                   # Shared Media & CCTV Validation Datasets
-│   └── test-videos/
-├── artifacts/                # Build outputs, inference logs
+├── shared/                   # Cross-Platform Shared Resources
+│   └── assets/               # Canonical shared media and datasets
+│       └── test-videos/      # Standardized CCTV test feeds and validation video
 ├── docs/                     # Authoritative Engineering Documentation
 └── .github/                  # CI/CD Workflows
 ```
@@ -97,8 +97,12 @@ Junction-App/
   - `scripts/development/` — Development setup scripts.
   - `scripts/deployment/` — Build and release utilities.
 
-### `assets/test-videos/`
-- **Responsibility:** Standardized CCTV video assets used for CV validation and demonstration.
+### `shared/assets/test-videos/`
+- **Responsibility:** Canonical shared test videos used by the Python CV bridge for inference and synchronized to the presentation frontend.
+- **Subdirectories & Artifacts:**
+  - `cv_bridge/artifacts/annotated-videos/` — Generated detection bounding box video overlays
+  - `cv_bridge/artifacts/observations/` — Serialized observation telemetry (`.jsonl`)
+  - `cv_bridge/artifacts/validation/` — Verification benchmarks and accuracy reports
 
 ---
 

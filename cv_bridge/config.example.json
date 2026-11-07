@@ -16,6 +16,6 @@
     "minMovementPixels": 15
   },
   "junctionApiUrl": "http://localhost:8080/api/observations",
-  "emitJsonlPath": "./artifacts/cctv_observations.jsonl",
-  "outputVideoPath": "./artifacts/annotated_cctv.mp4"
+  "emitJsonlPath": "./cv_bridge/artifacts/observations/cctv_observations.jsonl",
+  "outputVideoPath": "./cv_bridge/artifacts/annotated-videos/annotated_cctv.mp4"
 }

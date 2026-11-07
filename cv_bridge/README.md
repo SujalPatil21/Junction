@@ -30,7 +30,7 @@ export JUNCTION_EDGE_DEVICE_SECRET="your_shared_secret"
 
 # Run inference on sample CCTV stream pointing to Spring Boot
 python -m cv_bridge.inference \
-  --video assets/test-videos/demo_cctv.mp4 \
+  --video shared/assets/test-videos/demo_cctv.mp4 \
   --zone-id ZONE_WANKHEDE \
   --camera-id DEV_CCTV_WANKHEDE_01 \
   --resource-id WANKHEDE_EXIT \

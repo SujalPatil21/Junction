@@ -1,5 +1,5 @@
 """
-Generates the real-world venue entrance validation CCTV video in assets/venue_entrance_validation.mp4.
+Generates the real-world venue entrance validation CCTV video in shared/assets/test-videos/venue_entrance_validation.mp4.
 Uses real pedestrian camera imagery from the hackathon reference dataset with realistic entrance gate egress/ingress motion.
 """
 
@@ -7,11 +7,12 @@ import os
 import cv2
 import numpy as np
 
-os.makedirs("assets", exist_ok=True)
-output_path = "assets/venue_entrance_validation.mp4"
+target_dir = os.path.join("shared", "assets", "test-videos")
+os.makedirs(target_dir, exist_ok=True)
+output_path = os.path.join(target_dir, "venue_entrance_validation.mp4")
 
 # Source pedestrian images
-img_path = "assets/sample_frame.png"
+img_path = os.path.join("shared", "assets", "sample_frame.png")
 if os.path.exists(img_path):
     base_img = cv2.imread(img_path)
 else:

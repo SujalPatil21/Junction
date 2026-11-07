@@ -23,7 +23,7 @@ export default function CctvTechnicalPanel({
 
   const command = `python -m cv_bridge.inference --video ${selectedFeed.videoSrc.replace(
     "/videos/",
-    "assets/test-videos/"
+    "shared/assets/test-videos/"
   )} --zone-id ${selectedFeed.zoneId} --camera-id ${
     selectedFeed.cameraId
   } --http-url http://localhost:8080/api/observations --tripwire-y ${

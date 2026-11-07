@@ -4,19 +4,19 @@
 
 import fs from "fs";
 import path from "path";
-import { ingestionPipeline } from "../src/services/ingestionPipeline";
-import { sensorFusionEngine } from "../src/services/sensorFusionEngine";
-import { OPERATIONAL_ZONES } from "../src/services/zoneRegistry";
-import { NormalizedObservation } from "../src/types";
+import { ingestionPipeline } from "@/services/ingestionPipeline";
+import { sensorFusionEngine } from "@/services/sensorFusionEngine";
+import { OPERATIONAL_ZONES } from "@/services/zoneRegistry";
+import { NormalizedObservation } from "@/types";
 
 console.log("==========================================================================================");
 console.log("JUNCTION E2E PIPELINE TRACE: CV INFERENCE -> SERIALIZER -> INGESTION -> FUSION -> ZONE STATE");
 console.log("==========================================================================================\n");
 
 // 1. Read emitted JSONL records from real validation run
-const jsonlPath = path.resolve("artifacts/venue_entrance_observations.jsonl");
+const jsonlPath = path.resolve("cv_bridge/artifacts/observations/venue_entrance_observations.jsonl");
 if (!fs.existsSync(jsonlPath)) {
-  console.error("❌ Error: artifacts/venue_entrance_observations.jsonl not found.");
+  console.error("❌ Error: cv_bridge/artifacts/observations/venue_entrance_observations.jsonl not found.");
   process.exit(1);
 }
 

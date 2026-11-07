@@ -1,11 +1,11 @@
-import { sensorStreamSimulator } from "../src/services/sensorStreamSimulator";
-import { deviceRegistry } from "../src/services/deviceRegistry";
-import { ingestionPipeline } from "../src/services/ingestionPipeline";
-import { sensorFusionEngine, ZONE_CAPACITY_PROFILES } from "../src/services/sensorFusionEngine";
-import { OPERATIONAL_ZONES, fuseZoneState as legacyFuseZoneState } from "../src/services/zoneRegistry";
-import { getResources, getHotels } from "../src/services/mockDataService";
-import { createInitialSimulationState, nextSimulationState, calculateOutflowRate } from "../src/services/simulationEngine";
-import { NormalizedObservation, ZoneDefinition } from "../src/types";
+import { sensorStreamSimulator } from "@/services/sensorStreamSimulator";
+import { deviceRegistry } from "@/services/deviceRegistry";
+import { ingestionPipeline } from "@/services/ingestionPipeline";
+import { sensorFusionEngine, ZONE_CAPACITY_PROFILES } from "@/services/sensorFusionEngine";
+import { OPERATIONAL_ZONES, fuseZoneState as legacyFuseZoneState } from "@/services/zoneRegistry";
+import { getResources, getHotels } from "@/services/mockDataService";
+import { createInitialSimulationState, nextSimulationState, calculateOutflowRate } from "@/services/simulationEngine";
+import { NormalizedObservation, ZoneDefinition } from "@/types";
 
 console.log("==========================================================================================");
 console.log("JUNCTION DR-001 COMPREHENSIVE VERIFICATION & COMPARISON SUITE");

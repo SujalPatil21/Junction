@@ -1,5 +1,5 @@
 """
-Generates a realistic test video file in assets/demo_cctv.mp4 for smoke testing the CV bridge.
+Generates a realistic test video file in shared/assets/test-videos/demo_cctv.mp4 for smoke testing the CV bridge.
 Uses real person image frames with animated movement crossing the tripwire.
 """
 
@@ -7,10 +7,11 @@ import os
 import cv2
 import numpy as np
 
-os.makedirs("assets", exist_ok=True)
-output_path = "assets/demo_cctv.mp4"
+target_dir = os.path.join("shared", "assets", "test-videos")
+os.makedirs(target_dir, exist_ok=True)
+output_path = os.path.join(target_dir, "demo_cctv.mp4")
 
-src_img_path = "assets/sample_frame.png"
+src_img_path = os.path.join("shared", "assets", "sample_frame.png")
 if os.path.exists(src_img_path):
     base_img = cv2.imread(src_img_path)
 else:

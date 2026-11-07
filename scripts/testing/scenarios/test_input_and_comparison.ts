@@ -1,11 +1,11 @@
-import { sensorStreamSimulator } from "../src/services/sensorStreamSimulator";
-import { deviceRegistry } from "../src/services/deviceRegistry";
-import { ingestionPipeline } from "../src/services/ingestionPipeline";
-import { sensorFusionEngine } from "../src/services/sensorFusionEngine";
-import { OPERATIONAL_ZONES, fuseZoneState } from "../src/services/zoneRegistry";
-import { getResources, getHotels } from "../src/services/mockDataService";
-import { createInitialSimulationState, nextSimulationState, calculateOutflowRate } from "../src/services/simulationEngine";
-import { ScenarioId } from "../src/types";
+import { sensorStreamSimulator } from "@/services/sensorStreamSimulator";
+import { deviceRegistry } from "@/services/deviceRegistry";
+import { ingestionPipeline } from "@/services/ingestionPipeline";
+import { sensorFusionEngine } from "@/services/sensorFusionEngine";
+import { OPERATIONAL_ZONES, fuseZoneState } from "@/services/zoneRegistry";
+import { getResources, getHotels } from "@/services/mockDataService";
+import { createInitialSimulationState, nextSimulationState, calculateOutflowRate } from "@/services/simulationEngine";
+import { ScenarioId } from "@/types";
 
 sensorStreamSimulator.initializeDefaultDevices();
 

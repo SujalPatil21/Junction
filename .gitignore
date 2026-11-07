@@ -68,3 +68,12 @@ mobile/attendee_flutter_app/.flutter-plugins-dependencies
 mobile/attendee_flutter_app/.idea/
 attendee_flutter_app/build/
 attendee_flutter_app/.dart_tool/
+
+# cv generated artifacts
+cv_bridge/artifacts/annotated-videos/*.mp4
+!cv_bridge/artifacts/annotated-videos/annotated_concourse.mp4
+!cv_bridge/artifacts/annotated-videos/annotated_demo.mp4
+!cv_bridge/artifacts/annotated-videos/annotated_marine_lines.mp4
+!cv_bridge/artifacts/annotated-videos/annotated_staging.mp4
+!cv_bridge/artifacts/annotated-videos/annotated_venue_entrance_validation.mp4
+cv_bridge/artifacts/observations/*.tmp

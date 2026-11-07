@@ -1,11 +1,11 @@
 """
-Analyzes emitted JSONL observations from venue_entrance_observations.jsonl
+Analyzes emitted JSONL observations from cv_bridge/artifacts/observations/venue_entrance_observations.jsonl
 """
 
 import json
 from collections import Counter
 
-jsonl_path = "artifacts/venue_entrance_observations.jsonl"
+jsonl_path = "cv_bridge/artifacts/observations/venue_entrance_observations.jsonl"
 
 records = []
 with open(jsonl_path, "r", encoding="utf-8") as f:

@@ -14,8 +14,8 @@ import {
   getResources,
   getHotels,
   getRestaurants,
-} from "../src/services";
-import { NormalizedObservation, OperationalIntervention } from "../src/types";
+} from "@/services";
+import { NormalizedObservation, OperationalIntervention } from "@/types";
 
 console.log("==========================================================================================");
 console.log("JUNCTION STEP 32: END-TO-END SCENARIO VALIDATION SUITE (8 CANONICAL DEMONSTRATIONS)");
