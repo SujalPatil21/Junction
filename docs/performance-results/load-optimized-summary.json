@@ -1,0 +1,162 @@
+{
+    "metrics": {
+        "iteration_duration": {
+            "avg": 65.06562389272568,
+            "min": 50.0088,
+            "med": 60.0728,
+            "max": 248.2102,
+            "p(90)": 83.49323000000001,
+            "p(95)": 95.04256999999998
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0
+        },
+        "http_req_waiting": {
+            "avg": 8.477852657906649,
+            "min": 0,
+            "med": 4.9353,
+            "max": 125.8613,
+            "p(90)": 20.4182,
+            "p(95)": 28.5203
+        },
+        "http_reqs": {
+            "count": 267278,
+            "rate": 1370.598853539016
+        },
+        "data_received": {
+            "rate": 2692983.5266487026,
+            "count": 525153840
+        },
+        "http_req_duration": {
+            "min": 0,
+            "med": 5.5478,
+            "max": 180.8331,
+            "p(90)": 23.371220000000005,
+            "p(95)": 32.2147,
+            "avg": 9.689698936687579,
+            "thresholds": {
+                "p(95)<500": false,
+                "p(99)<1000": false
+            }
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 249
+        },
+        "http_req_blocked": {
+            "min": 0,
+            "med": 0,
+            "max": 110.6671,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.0763478516750352
+        },
+        "http_req_connecting": {
+            "max": 69.162,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.04959474666826298,
+            "min": 0,
+            "med": 0
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 9.689698936687579,
+            "min": 0,
+            "med": 5.5478,
+            "max": 180.8331,
+            "p(90)": 23.371220000000005,
+            "p(95)": 32.2147
+        },
+        "http_req_receiving": {
+            "avg": 1.0724264967561916,
+            "min": 0,
+            "med": 0,
+            "max": 150.2647,
+            "p(90)": 1.1004,
+            "p(95)": 5.323694999999993
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 267278,
+            "thresholds": {
+                "rate<0.02": false
+            },
+            "value": 0
+        },
+        "checks": {
+            "passes": 334280,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_sending": {
+            "p(95)": 0,
+            "avg": 0.13941978202470837,
+            "min": 0,
+            "med": 0,
+            "max": 102.6098,
+            "p(90)": 0
+        },
+        "vus_max": {
+            "value": 250,
+            "min": 250,
+            "max": 250
+        },
+        "data_sent": {
+            "rate": 436737.8289295716,
+            "count": 85167453
+        },
+        "iterations": {
+            "count": 267278,
+            "rate": 1370.598853539016
+        }
+    },
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "scenarios 200": {
+                    "passes": 159972,
+                    "fails": 0,
+                    "name": "scenarios 200",
+                    "path": "::scenarios 200",
+                    "id": "45b8e933875e0243e34bec6c4b1cd5cf"
+                },
+                "ingestion 200": {
+                    "fails": 0,
+                    "name": "ingestion 200",
+                    "path": "::ingestion 200",
+                    "id": "82b9bf84200c71569553733e3e06f84f",
+                    "passes": 67002
+                },
+                "observations accepted": {
+                    "name": "observations accepted",
+                    "path": "::observations accepted",
+                    "id": "293df28ab02082fbd06c4a6876e1c484",
+                    "passes": 67002,
+                    "fails": 0
+                },
+                "nugen 200": {
+                    "name": "nugen 200",
+                    "path": "::nugen 200",
+                    "id": "f3816171387e0d32961c81c830055ea5",
+                    "passes": 26908,
+                    "fails": 0
+                },
+                "plan 200": {
+                    "id": "712080c6ae32baca19525416ab4f7c75",
+                    "passes": 13396,
+                    "fails": 0,
+                    "name": "plan 200",
+                    "path": "::plan 200"
+                }
+            },
+        "name": "",
+        "path": ""
+    }
+}

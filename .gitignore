@@ -86,3 +86,4 @@ cv_bridge/artifacts/observations/*.tmp
 /.claude/
 /.rocketride/
 /rocketride/
+.rocketride/

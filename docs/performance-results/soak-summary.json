@@ -1,0 +1,155 @@
+{
+    "metrics": {
+        "http_req_tls_handshaking": {
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 50
+        },
+        "iterations": {
+            "count": 24464,
+            "rate": 271.7035852668584
+        },
+        "data_received": {
+            "count": 40112586,
+            "rate": 445500.8760025013
+        },
+        "vus_max": {
+            "value": 50,
+            "min": 50,
+            "max": 50
+        },
+        "http_req_receiving": {
+            "avg": 0.12577664731850924,
+            "min": 0,
+            "med": 0,
+            "max": 36.2869,
+            "p(90)": 0,
+            "p(95)": 0.9968
+        },
+        "http_req_sending": {
+            "avg": 0.01496596223021583,
+            "min": 0,
+            "med": 0,
+            "max": 10.3606,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "data_sent": {
+            "count": 4905709,
+            "rate": 54484.08778514939
+        },
+        "http_req_waiting": {
+            "med": 92.1181,
+            "max": 660.258,
+            "p(90)": 199.77910000000006,
+            "p(95)": 254.37790999999999,
+            "avg": 101.67994016922886,
+            "min": 0
+        },
+        "http_reqs": {
+            "count": 24464,
+            "rate": 271.7035852668584
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 24464,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 101.82068277877748,
+            "min": 0,
+            "med": 92.2208,
+            "max": 660.258,
+            "p(90)": 199.8787,
+            "p(95)": 254.53300499999986
+        },
+        "http_req_duration": {
+            "avg": 101.82068277877748,
+            "min": 0,
+            "med": 92.2208,
+            "max": 660.258,
+            "p(90)": 199.8787,
+            "p(95)": 254.53300499999986,
+            "thresholds": {
+                "p(95)<500": false,
+                "p(99)<1000": false
+            }
+        },
+        "http_req_connecting": {
+            "avg": 0.012361514879005886,
+            "min": 0,
+            "med": 0,
+            "max": 10.5629,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "checks": {
+            "passes": 24464,
+            "fails": 0,
+            "value": 1
+        },
+        "iteration_duration": {
+            "p(90)": 251.99651,
+            "p(95)": 306.6072,
+            "avg": 153.71711101618578,
+            "min": 50.2474,
+            "med": 143.9795,
+            "max": 710.5497
+        },
+        "http_req_blocked": {
+            "max": 19.6674,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.018058608567691307,
+            "min": 0,
+            "med": 0
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "weather status is 200": {
+                    "name": "weather status is 200",
+                    "path": "::weather status is 200",
+                    "id": "f8a57e173d52e38917ea523c8711a5a4",
+                    "passes": 7514,
+                    "fails": 0
+                },
+                "status is 200": {
+                    "path": "::status is 200",
+                    "id": "6210a8cd14cd70477eba5c5e4cb3fb5f",
+                    "passes": 12161,
+                    "fails": 0,
+                    "name": "status is 200"
+                },
+                "ingestion status is 200": {
+                    "id": "6420c4b721ab3e5d361a6c69ed9567f4",
+                    "passes": 3598,
+                    "fails": 0,
+                    "name": "ingestion status is 200",
+                    "path": "::ingestion status is 200"
+                },
+                "nugen status is 200": {
+                    "id": "d7dae2e7b513c0cf12d20d767feacc8f",
+                    "passes": 1191,
+                    "fails": 0,
+                    "name": "nugen status is 200",
+                    "path": "::nugen status is 200"
+                }
+            }
+    }
+}

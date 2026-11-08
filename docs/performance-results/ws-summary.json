@@ -1,0 +1,159 @@
+{
+    "metrics": {
+        "data_received": {
+            "count": 13801999,
+            "rate": 301632.57166076987
+        },
+        "polling_fallback_success": {
+            "passes": 4732,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.95": false
+            },
+            "value": 1
+        },
+        "ws_connecting": {
+            "avg": 613.7517193786996,
+            "min": 0,
+            "med": 403.20939999999996,
+            "max": 3637.0115,
+            "p(90)": 1691.1229,
+            "p(95)": 1908.501495
+        },
+        "http_req_duration": {
+            "avg": 657.2768036136938,
+            "min": 0,
+            "med": 412.4763,
+            "max": 4727.1084,
+            "p(90)": 1751.2266700000005,
+            "p(95)": 2007.507
+        },
+        "http_req_blocked": {
+            "med": 0,
+            "max": 30.0275,
+            "p(90)": 0.5069300000000004,
+            "p(95)": 1.3313149999999985,
+            "avg": 0.18653406593406585,
+            "min": 0
+        },
+        "http_req_tls_handshaking": {
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0
+        },
+        "vus_max": {
+            "value": 500,
+            "min": 500,
+            "max": 500
+        },
+        "ws_sessions": {
+            "count": 4732,
+            "rate": 103.41439157463807
+        },
+        "iteration_duration": {
+            "avg": 1773.620882755704,
+            "min": 502.8896,
+            "med": 1428.09815,
+            "max": 6875.5543,
+            "p(90)": 3466.5751600000017,
+            "p(95)": 4079.201479999999
+        },
+        "iterations": {
+            "count": 4732,
+            "rate": 103.41439157463807
+        },
+        "ws_session_duration": {
+            "med": 403.20939999999996,
+            "max": 3637.0115,
+            "p(90)": 1691.1229,
+            "p(95)": 1908.501495,
+            "avg": 613.7763066356732,
+            "min": 0
+        },
+        "http_req_connecting": {
+            "max": 25.4943,
+            "p(90)": 0,
+            "p(95)": 1.1634899999999992,
+            "avg": 0.16302185122569715,
+            "min": 0,
+            "med": 0
+        },
+        "vus": {
+            "min": 5,
+            "max": 497,
+            "value": 141
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 4732,
+            "value": 0
+        },
+        "http_req_receiving": {
+            "p(90)": 0.5729,
+            "p(95)": 1.0046,
+            "avg": 0.21202852916314496,
+            "min": 0,
+            "med": 0,
+            "max": 40.1047
+        },
+        "data_sent": {
+            "count": 1542632,
+            "rate": 33713.09165333201
+        },
+        "checks": {
+            "passes": 0,
+            "fails": 4732,
+            "value": 0
+        },
+        "http_req_sending": {
+            "p(95)": 0,
+            "avg": 0.02632092138630602,
+            "min": 0,
+            "med": 0,
+            "max": 3.7072,
+            "p(90)": 0
+        },
+        "http_req_waiting": {
+            "max": 4727.1084,
+            "p(90)": 1748.3186,
+            "p(95)": 2006.957935,
+            "avg": 657.0384541631443,
+            "min": 0,
+            "med": 412.4763
+        },
+        "http_reqs": {
+            "count": 4732,
+            "rate": 103.41439157463807
+        },
+        "ws_connections_failed": {
+            "count": 4732,
+            "rate": 103.41439157463807
+        },
+        "http_req_duration{expected_response:true}": {
+            "med": 412.4763,
+            "max": 4727.1084,
+            "p(90)": 1751.2266700000005,
+            "p(95)": 2007.507,
+            "avg": 657.2768036136938,
+            "min": 0
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "ws handshake 101 or documented uninstrumented 404": {
+                    "name": "ws handshake 101 or documented uninstrumented 404",
+                    "path": "::ws handshake 101 or documented uninstrumented 404",
+                    "id": "33be5b154ef9a9941bf6e902da3ac53e",
+                    "passes": 0,
+                    "fails": 4732
+                }
+            }
+    }
+}

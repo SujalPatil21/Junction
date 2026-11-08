@@ -23,12 +23,46 @@ function isValidCoordinate(lng: number, lat: number): boolean {
 }
 
 /**
+ * Safely adds, updates, or reuses an entity in the Cesium viewer idempotently.
+ * Checks whether an entity with the specified ID already exists using viewer.entities.getById(id).
+ * If the entity already exists:
+ *   - If replacement is requested, removes only the exact entity owned by this layer before recreating it.
+ *   - Otherwise, updates basic mutable properties and reuses the existing entity to prevent duplicate ID collisions.
+ * If the entity does not exist, adds it to viewer.entities.
+ */
+function safeAddOrUpdateEntity(
+  viewer: Cesium.Viewer,
+  options: Cesium.Entity.ConstructorOptions,
+  replace: boolean = false
+): Cesium.Entity {
+  if (options.id) {
+    const existing = viewer.entities.getById(options.id);
+    if (existing) {
+      if (replace) {
+        viewer.entities.remove(existing);
+      } else {
+        if (options.name) existing.name = options.name;
+        if (options.show !== undefined) existing.show = options.show;
+        return existing;
+      }
+    }
+  }
+  return viewer.entities.add(options);
+}
+
+/**
  * Renders 3D City Buildings, Wankhede Stadium 3D Architecture,
  * Floodlight Towers, Railway Stations, and Vegetation across South Mumbai.
  * All 3D entities undergo coordinate bounding-box validation and height sanity assertions.
  */
-export function render3DCityAndStadium(viewer: Cesium.Viewer, options?: { renderSkyscrapers?: boolean }) {
+export function render3DCityAndStadium(
+  viewer: Cesium.Viewer,
+  options?: { renderSkyscrapers?: boolean; replace?: boolean }
+) {
+  if (!viewer || viewer.isDestroyed()) return;
+
   const renderSkyscrapers = options?.renderSkyscrapers !== false;
+  const shouldReplace = options?.replace === true;
   const wankhedeLat = 18.9389;
   const wankhedeLng = 72.8258;
 
@@ -39,65 +73,77 @@ export function render3DCityAndStadium(viewer: Cesium.Viewer, options?: { render
   // ============================================================
 
   // 1A. Stadium Pitch (Green Cricket Turf)
-  viewer.entities.add({
-    id: "3d-stadium-pitch",
-    name: "Wankhede Stadium Pitch",
-    polygon: {
-      hierarchy: Cesium.Cartesian3.fromDegreesArray([
-        wankhedeLng - 0.0006, wankhedeLat - 0.0005,
-        wankhedeLng + 0.0006, wankhedeLat - 0.0005,
-        wankhedeLng + 0.0006, wankhedeLat + 0.0005,
-        wankhedeLng - 0.0006, wankhedeLat + 0.0005,
-      ]),
-      material: Cesium.Color.fromCssColorString("#15803D"),
+  safeAddOrUpdateEntity(
+    viewer,
+    {
+      id: "3d-stadium-pitch",
+      name: "Wankhede Stadium Pitch",
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray([
+          wankhedeLng - 0.0006, wankhedeLat - 0.0005,
+          wankhedeLng + 0.0006, wankhedeLat - 0.0005,
+          wankhedeLng + 0.0006, wankhedeLat + 0.0005,
+          wankhedeLng - 0.0006, wankhedeLat + 0.0005,
+        ]),
+        material: Cesium.Color.fromCssColorString("#15803D"),
+      },
     },
-  });
+    shouldReplace
+  );
 
   // 1B. Wankhede Outer Grandstands Bowl (3D Extruded Cylinder)
   const bowlHeight = Math.min(BBOX.MAX_HEIGHT_METERS, 32);
-  viewer.entities.add({
-    id: "3d-stadium-bowl",
-    name: "Wankhede Stadium Grandstands",
-    position: Cesium.Cartesian3.fromDegrees(wankhedeLng, wankhedeLat, 0),
-    cylinder: {
-      length: bowlHeight,
-      topRadius: 110,
-      bottomRadius: 95,
-      material: Cesium.Color.fromCssColorString("#334155").withAlpha(0.92),
-      outline: true,
-      outlineColor: Cesium.Color.fromCssColorString("#94A3B8"),
-      heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+  safeAddOrUpdateEntity(
+    viewer,
+    {
+      id: "3d-stadium-bowl",
+      name: "Wankhede Stadium Grandstands",
+      position: Cesium.Cartesian3.fromDegrees(wankhedeLng, wankhedeLat, 0),
+      cylinder: {
+        length: bowlHeight,
+        topRadius: 110,
+        bottomRadius: 95,
+        material: Cesium.Color.fromCssColorString("#334155").withAlpha(0.92),
+        outline: true,
+        outlineColor: Cesium.Color.fromCssColorString("#94A3B8"),
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+      },
+      label: {
+        text: "🏟️ WANKHEDE STADIUM",
+        font: "800 12px sans-serif",
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 4,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -45),
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8000),
+      },
     },
-    label: {
-      text: "🏟️ WANKHEDE STADIUM",
-      font: "800 12px sans-serif",
-      fillColor: Cesium.Color.WHITE,
-      outlineColor: Cesium.Color.BLACK,
-      outlineWidth: 4,
-      style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-      verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-      pixelOffset: new Cesium.Cartesian2(0, -45),
-      heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-      distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8000),
-    },
-  });
+    shouldReplace
+  );
 
   // 1C. Stadium Canopy Roof Structure
   const roofHeight = Math.min(BBOX.MAX_HEIGHT_METERS, 36);
-  viewer.entities.add({
-    id: "3d-stadium-roof",
-    name: "Wankhede Roof Canopy",
-    position: Cesium.Cartesian3.fromDegrees(wankhedeLng, wankhedeLat, 0),
-    cylinder: {
-      length: roofHeight,
-      topRadius: 115,
-      bottomRadius: 112,
-      material: Cesium.Color.fromCssColorString("#F8FAFC").withAlpha(0.85),
-      outline: true,
-      outlineColor: Cesium.Color.BLACK,
-      heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+  safeAddOrUpdateEntity(
+    viewer,
+    {
+      id: "3d-stadium-roof",
+      name: "Wankhede Roof Canopy",
+      position: Cesium.Cartesian3.fromDegrees(wankhedeLng, wankhedeLat, 0),
+      cylinder: {
+        length: roofHeight,
+        topRadius: 115,
+        bottomRadius: 112,
+        material: Cesium.Color.fromCssColorString("#F8FAFC").withAlpha(0.85),
+        outline: true,
+        outlineColor: Cesium.Color.BLACK,
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+      },
     },
-  });
+    shouldReplace
+  );
 
   // 1D. 4 Corner Floodlight Towers (50m High Towers)
   const floodlightCoords = [
@@ -110,27 +156,35 @@ export function render3DCityAndStadium(viewer: Cesium.Viewer, options?: { render
   floodlightCoords.forEach((tower, idx) => {
     if (!isValidCoordinate(tower.lng, tower.lat)) return;
 
-    viewer.entities.add({
-      id: `3d-floodlight-pole-${idx}`,
-      position: Cesium.Cartesian3.fromDegrees(tower.lng, tower.lat, 0),
-      cylinder: {
-        length: 50,
-        topRadius: 1.5,
-        bottomRadius: 3.0,
-        material: Cesium.Color.fromCssColorString("#64748B"),
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+    safeAddOrUpdateEntity(
+      viewer,
+      {
+        id: `3d-floodlight-pole-${idx}`,
+        position: Cesium.Cartesian3.fromDegrees(tower.lng, tower.lat, 0),
+        cylinder: {
+          length: 50,
+          topRadius: 1.5,
+          bottomRadius: 3.0,
+          material: Cesium.Color.fromCssColorString("#64748B"),
+          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        },
       },
-    });
+      shouldReplace
+    );
 
-    viewer.entities.add({
-      id: `3d-floodlight-head-${idx}`,
-      position: Cesium.Cartesian3.fromDegrees(tower.lng, tower.lat, 0),
-      box: {
-        dimensions: new Cesium.Cartesian3(8, 8, 52),
-        material: Cesium.Color.fromCssColorString("#FEF08A"),
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+    safeAddOrUpdateEntity(
+      viewer,
+      {
+        id: `3d-floodlight-head-${idx}`,
+        position: Cesium.Cartesian3.fromDegrees(tower.lng, tower.lat, 0),
+        box: {
+          dimensions: new Cesium.Cartesian3(8, 8, 52),
+          material: Cesium.Color.fromCssColorString("#FEF08A"),
+          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        },
       },
-    });
+      shouldReplace
+    );
   });
 
   // ============================================================
@@ -139,57 +193,65 @@ export function render3DCityAndStadium(viewer: Cesium.Viewer, options?: { render
   const churchgateLng = 72.8272;
   const churchgateLat = 18.9355;
   if (isValidCoordinate(churchgateLng, churchgateLat)) {
-    viewer.entities.add({
-      id: "3d-building-churchgate-station",
-      name: "Churchgate Station Terminal",
-      position: Cesium.Cartesian3.fromDegrees(churchgateLng, churchgateLat, 0),
-      box: {
-        dimensions: new Cesium.Cartesian3(45, 180, 24),
-        material: Cesium.Color.fromCssColorString("#475569").withAlpha(0.9),
-        outline: true,
-        outlineColor: Cesium.Color.fromCssColorString("#94A3B8"),
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+    safeAddOrUpdateEntity(
+      viewer,
+      {
+        id: "3d-building-churchgate-station",
+        name: "Churchgate Station Terminal",
+        position: Cesium.Cartesian3.fromDegrees(churchgateLng, churchgateLat, 0),
+        box: {
+          dimensions: new Cesium.Cartesian3(45, 180, 24),
+          material: Cesium.Color.fromCssColorString("#475569").withAlpha(0.9),
+          outline: true,
+          outlineColor: Cesium.Color.fromCssColorString("#94A3B8"),
+          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        },
+        label: {
+          text: "🚉 CHURCHGATE STATION",
+          font: "700 11px sans-serif",
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 3,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          pixelOffset: new Cesium.Cartesian2(0, -30),
+          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 6000),
+        },
       },
-      label: {
-        text: "🚉 CHURCHGATE STATION",
-        font: "700 11px sans-serif",
-        fillColor: Cesium.Color.WHITE,
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 3,
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        pixelOffset: new Cesium.Cartesian2(0, -30),
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 6000),
-      },
-    });
+      shouldReplace
+    );
   }
 
   const csmtLng = 72.8353;
   const csmtLat = 18.9400;
   if (isValidCoordinate(csmtLng, csmtLat)) {
-    viewer.entities.add({
-      id: "3d-building-csmt-station",
-      name: "CSMT Railway Station",
-      position: Cesium.Cartesian3.fromDegrees(csmtLng, csmtLat, 0),
-      box: {
-        dimensions: new Cesium.Cartesian3(60, 220, 36),
-        material: Cesium.Color.fromCssColorString("#78350F").withAlpha(0.9),
-        outline: true,
-        outlineColor: Cesium.Color.fromCssColorString("#FDE68A"),
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+    safeAddOrUpdateEntity(
+      viewer,
+      {
+        id: "3d-building-csmt-station",
+        name: "CSMT Railway Station",
+        position: Cesium.Cartesian3.fromDegrees(csmtLng, csmtLat, 0),
+        box: {
+          dimensions: new Cesium.Cartesian3(60, 220, 36),
+          material: Cesium.Color.fromCssColorString("#78350F").withAlpha(0.9),
+          outline: true,
+          outlineColor: Cesium.Color.fromCssColorString("#FDE68A"),
+          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        },
+        label: {
+          text: "🏛️ CSMT TERMINUS",
+          font: "700 11px sans-serif",
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 3,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          pixelOffset: new Cesium.Cartesian2(0, -42),
+          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8000),
+        },
       },
-      label: {
-        text: "🏛️ CSMT TERMINUS",
-        font: "700 11px sans-serif",
-        fillColor: Cesium.Color.WHITE,
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 3,
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        pixelOffset: new Cesium.Cartesian2(0, -42),
-        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8000),
-      },
-    });
+      shouldReplace
+    );
   }
 
   // ============================================================
@@ -277,18 +339,22 @@ export function render3DCityAndStadium(viewer: Cesium.Viewer, options?: { render
 
       const safeHeight = Math.min(BBOX.MAX_HEIGHT_METERS, Math.max(10, bld.height));
 
-      viewer.entities.add({
-        id: `3d-building-procedural-${idx}`,
-        name: bld.name,
-        position: Cesium.Cartesian3.fromDegrees(bld.lng, bld.lat, 0),
-        box: {
-          dimensions: new Cesium.Cartesian3(bld.width, bld.depth, safeHeight),
-          material: Cesium.Color.fromCssColorString(bld.color).withAlpha(0.88),
-          outline: true,
-          outlineColor: Cesium.Color.fromCssColorString("#64748B"),
-          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+      safeAddOrUpdateEntity(
+        viewer,
+        {
+          id: `3d-building-procedural-${idx}`,
+          name: bld.name,
+          position: Cesium.Cartesian3.fromDegrees(bld.lng, bld.lat, 0),
+          box: {
+            dimensions: new Cesium.Cartesian3(bld.width, bld.depth, safeHeight),
+            material: Cesium.Color.fromCssColorString(bld.color).withAlpha(0.88),
+            outline: true,
+            outlineColor: Cesium.Color.fromCssColorString("#64748B"),
+            heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+          },
         },
-      });
+        shouldReplace
+      );
     });
   }
 

@@ -1,0 +1,169 @@
+{
+    "metrics": {
+        "http_reqs": {
+            "count": 262809,
+            "rate": 3284.9351299276595
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 22.39520077775111,
+            "min": 0,
+            "med": 15.5729,
+            "max": 709.7058,
+            "p(90)": 49.024460000000005,
+            "p(95)": 59.36069999999998
+        },
+        "data_sent": {
+            "count": 67982514,
+            "rate": 849735.5435293271
+        },
+        "http_req_failed": {
+            "fails": 262809,
+            "passes": 0,
+            "thresholds": {
+                "rate<0.02": false
+            },
+            "value": 0
+        },
+        "http_req_blocked": {
+            "avg": 0.25025090464938393,
+            "min": 0,
+            "med": 0,
+            "max": 338.1338,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_waiting": {
+            "avg": 19.807345223337038,
+            "min": 0,
+            "med": 13.8647,
+            "max": 705.2146,
+            "p(90)": 45.7134,
+            "p(95)": 53.47251999999998
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 249
+        },
+        "http_req_duration": {
+            "avg": 22.39520077775111,
+            "min": 0,
+            "med": 15.5729,
+            "max": 709.7058,
+            "p(90)": 49.024460000000005,
+            "p(95)": 59.36069999999998,
+            "thresholds": {
+                "p(95)<600": false,
+                "p(99)<1200": false
+            }
+        },
+        "http_req_sending": {
+            "avg": 0.5290068821843995,
+            "min": 0,
+            "med": 0,
+            "max": 315.7824,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_receiving": {
+            "p(95)": 7.230319999999972,
+            "avg": 2.058848672229636,
+            "min": 0,
+            "med": 0,
+            "max": 310.0385,
+            "p(90)": 1.0005
+        },
+        "http_req_connecting": {
+            "avg": 0.09494275766811643,
+            "min": 0,
+            "med": 0,
+            "max": 163.2987,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "vus_max": {
+            "value": 250,
+            "min": 250,
+            "max": 250
+        },
+        "checks": {
+            "passes": 262809,
+            "fails": 0,
+            "value": 1
+        },
+        "iteration_duration": {
+            "avg": 44.91807116727265,
+            "min": 10.0016,
+            "med": 38.2199,
+            "max": 720.9835,
+            "p(90)": 78.28020000000004,
+            "p(95)": 95.68137999999998
+        },
+        "iterations": {
+            "count": 262809,
+            "rate": 3284.9351299276595
+        },
+        "data_received": {
+            "count": 317547825,
+            "rate": 3969133.499136714
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "weather 200": {
+                    "fails": 0,
+                    "name": "weather 200",
+                    "path": "::weather 200",
+                    "id": "e4e1501ebd950658a533ceed2beba78f",
+                    "passes": 52705
+                },
+                "scenario 200": {
+                    "name": "scenario 200",
+                    "path": "::scenario 200",
+                    "id": "e8e628fb73bee9220ab5620945a96010",
+                    "passes": 52562,
+                    "fails": 0
+                },
+                "signals 200": {
+                    "id": "261fb0e109f3f3dfa6f46ac9614c6a0c",
+                    "passes": 52454,
+                    "fails": 0,
+                    "name": "signals 200",
+                    "path": "::signals 200"
+                },
+                "ingestion 200": {
+                    "name": "ingestion 200",
+                    "path": "::ingestion 200",
+                    "id": "82b9bf84200c71569553733e3e06f84f",
+                    "passes": 65617,
+                    "fails": 0
+                },
+                "nugen 200": {
+                    "name": "nugen 200",
+                    "path": "::nugen 200",
+                    "id": "f3816171387e0d32961c81c830055ea5",
+                    "passes": 26405,
+                    "fails": 0
+                },
+                "plan 200": {
+                    "passes": 13066,
+                    "fails": 0,
+                    "name": "plan 200",
+                    "path": "::plan 200",
+                    "id": "712080c6ae32baca19525416ab4f7c75"
+                }
+            }
+    }
+}

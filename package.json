@@ -17,6 +17,13 @@
     "test:resilience": "tsx --tsconfig scripts/tsconfig.json scripts/testing/test-dashboard-resilience.ts",
     "test:cv": "pytest -c cv_bridge/pytest.ini cv_bridge/tests -v",
     "test:backend": "cd backend && mvn test",
+    "test:k6:smoke": "k6 run scripts/testing/k6/scenarios/rest-smoke.js",
+    "test:k6:load": "k6 run scripts/testing/k6/scenarios/rest-load.js",
+    "test:k6:mixed": "k6 run scripts/testing/k6/scenarios/mixed-workload.js",
+    "test:k6:stress": "k6 run scripts/testing/k6/scenarios/rest-stress.js",
+    "test:k6:spike": "k6 run scripts/testing/k6/scenarios/rest-spike.js",
+    "test:k6:soak": "k6 run scripts/testing/k6/scenarios/rest-soak.js",
+    "test:k6:websocket": "k6 run scripts/testing/k6/scenarios/websocket-concurrency.js",
     "generate:qr": "node scripts/utilities/generate_qr.js"
   },
   "dependencies": {

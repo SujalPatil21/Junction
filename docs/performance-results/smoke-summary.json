@@ -1,0 +1,288 @@
+{
+    "metrics": {
+        "checks": {
+            "passes": 870,
+            "fails": 0,
+            "value": 1
+        },
+        "data_sent": {
+            "count": 114847,
+            "rate": 7596.189032963473
+        },
+        "iteration_duration": {
+            "p(95)": 537.8645250000001,
+            "avg": 521.3111586206896,
+            "min": 507.1091,
+            "med": 519.4404,
+            "max": 558.927,
+            "p(90)": 535.31387
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 2.5470399014778327,
+            "min": 0.5051,
+            "med": 2.15315,
+            "max": 11.2184,
+            "p(90)": 4.8671,
+            "p(95)": 6.8862000000000005
+        },
+        "http_req_tls_handshaking": {
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0
+        },
+        "iterations": {
+            "count": 58,
+            "rate": 3.8362252728576407
+        },
+        "vus_max": {
+            "value": 2,
+            "min": 2,
+            "max": 2
+        },
+        "http_req_blocked": {
+            "avg": 0.13610763546798027,
+            "min": 0,
+            "med": 0,
+            "max": 24.6016,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "group_duration": {
+            "med": 2.6069,
+            "max": 28.9626,
+            "p(90)": 6.651570000000002,
+            "p(95)": 8.26617,
+            "avg": 3.4468275862068967,
+            "min": 0.5129
+        },
+        "http_req_receiving": {
+            "avg": 0.3137273399014779,
+            "min": 0,
+            "med": 0,
+            "max": 4.7466,
+            "p(90)": 0.6645,
+            "p(95)": 0.82245
+        },
+        "data_received": {
+            "rate": 32002.386502513884,
+            "count": 483845
+        },
+        "http_req_connecting": {
+            "min": 0,
+            "med": 0,
+            "max": 1.7943,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.013433990147783252
+        },
+        "http_req_duration": {
+            "min": 0.5051,
+            "med": 2.15315,
+            "max": 11.2184,
+            "p(90)": 4.8671,
+            "p(95)": 6.8862000000000005,
+            "avg": 2.5470399014778327,
+            "thresholds": {
+                "p(95)<300": false,
+                "p(99)<600": false
+            }
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 406,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "vus": {
+            "value": 2,
+            "min": 2,
+            "max": 2
+        },
+        "http_reqs": {
+            "rate": 26.853576910003486,
+            "count": 406
+        },
+        "http_req_sending": {
+            "min": 0,
+            "med": 0,
+            "max": 0.7599,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.018064285714285713
+        },
+        "http_req_waiting": {
+            "min": 0,
+            "med": 1.80865,
+            "max": 10.9627,
+            "p(90)": 4.247199999999999,
+            "p(95)": 6.3347750000000005,
+            "avg": 2.2152482758620686
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "1. Public Health & System Status": {
+                "path": "::1. Public Health & System Status",
+                "id": "157f73c83da856bcb437bb0f8d4f0c21",
+                "groups": {},
+                "checks": {
+                        "health status is 200": {
+                            "name": "health status is 200",
+                            "path": "::1. Public Health & System Status::health status is 200",
+                            "id": "6854e0a06837642b648e5f44a761b9de",
+                            "passes": 58,
+                            "fails": 0
+                        },
+                        "health body contains status ok": {
+                            "fails": 0,
+                            "name": "health body contains status ok",
+                            "path": "::1. Public Health & System Status::health body contains status ok",
+                            "id": "a8c43e2247f5bf29484b31f0770385e3",
+                            "passes": 58
+                        }
+                    },
+                "name": "1. Public Health & System Status"
+            },
+            "2. Operational Scenarios & Digital Twin": {
+                "id": "b134aee238dc2b2a6eb575f502d04334",
+                "groups": {},
+                "checks": {
+                        "scenarios status is 200": {
+                            "name": "scenarios status is 200",
+                            "path": "::2. Operational Scenarios & Digital Twin::scenarios status is 200",
+                            "id": "a86c40a20f80b85fb5f1199c8131b2a0",
+                            "passes": 58,
+                            "fails": 0
+                        },
+                        "has activeScenario": {
+                            "passes": 58,
+                            "fails": 0,
+                            "name": "has activeScenario",
+                            "path": "::2. Operational Scenarios & Digital Twin::has activeScenario",
+                            "id": "40c76a6c40d650efbe054b1468c56671"
+                        }
+                    },
+                "name": "2. Operational Scenarios & Digital Twin",
+                "path": "::2. Operational Scenarios & Digital Twin"
+            },
+            "3. Meteorological Telemetry & Signals": {
+                "name": "3. Meteorological Telemetry & Signals",
+                "path": "::3. Meteorological Telemetry & Signals",
+                "id": "493d21393f541a884b914b2e0130b029",
+                "groups": {},
+                "checks": {
+                        "weather status is 200": {
+                            "fails": 0,
+                            "name": "weather status is 200",
+                            "path": "::3. Meteorological Telemetry & Signals::weather status is 200",
+                            "id": "e1a17f283ccc834b4407e66948b338a4",
+                            "passes": 58
+                        },
+                        "weather success is true": {
+                            "id": "66077a34161d04ac6deb0365c43eeaf1",
+                            "passes": 58,
+                            "fails": 0,
+                            "name": "weather success is true",
+                            "path": "::3. Meteorological Telemetry & Signals::weather success is true"
+                        },
+                        "social signals status is 200": {
+                            "fails": 0,
+                            "name": "social signals status is 200",
+                            "path": "::3. Meteorological Telemetry & Signals::social signals status is 200",
+                            "id": "f4af29ad450eca964d9f5971bb8038cc",
+                            "passes": 58
+                        },
+                        "signals array exists": {
+                            "fails": 0,
+                            "name": "signals array exists",
+                            "path": "::3. Meteorological Telemetry & Signals::signals array exists",
+                            "id": "6ad86cf95bdba7de2ad5d99c1bada2b7",
+                            "passes": 58
+                        }
+                    }
+            },
+            "4. NUGEN Domain Intelligence": {
+                "path": "::4. NUGEN Domain Intelligence",
+                "id": "2927b745afa25410a1cb642307879bc4",
+                "groups": {},
+                "checks": {
+                        "nugen intelligence status is 200": {
+                            "name": "nugen intelligence status is 200",
+                            "path": "::4. NUGEN Domain Intelligence::nugen intelligence status is 200",
+                            "id": "4fad1830510d16684398b8bf0ea57e8d",
+                            "passes": 58,
+                            "fails": 0
+                        },
+                        "nugen returned intelligence object": {
+                            "name": "nugen returned intelligence object",
+                            "path": "::4. NUGEN Domain Intelligence::nugen returned intelligence object",
+                            "id": "45e4f78fc51405622760280f9e284eeb",
+                            "passes": 58,
+                            "fails": 0
+                        }
+                    },
+                "name": "4. NUGEN Domain Intelligence"
+            },
+            "5. Authoritative Recommendation Planning": {
+                "name": "5. Authoritative Recommendation Planning",
+                "path": "::5. Authoritative Recommendation Planning",
+                "id": "fa54ae70d0d8b153222e23d54b844cd1",
+                "groups": {},
+                "checks": {
+                        "plan status is 200": {
+                            "path": "::5. Authoritative Recommendation Planning::plan status is 200",
+                            "id": "9f41a7cc99c7f324f3664eb502aef6e6",
+                            "passes": 58,
+                            "fails": 0,
+                            "name": "plan status is 200"
+                        },
+                        "plan success is true": {
+                            "path": "::5. Authoritative Recommendation Planning::plan success is true",
+                            "id": "db9d24c8697f40e39ae862e6ea9e7522",
+                            "passes": 58,
+                            "fails": 0,
+                            "name": "plan success is true"
+                        },
+                        "plan contains recommendations": {
+                            "name": "plan contains recommendations",
+                            "path": "::5. Authoritative Recommendation Planning::plan contains recommendations",
+                            "id": "6f2191e59320c0e0ddc144d961b43989",
+                            "passes": 58,
+                            "fails": 0
+                        }
+                    }
+            },
+            "6. Edge Device Observation Ingestion (Write)": {
+                "name": "6. Edge Device Observation Ingestion (Write)",
+                "path": "::6. Edge Device Observation Ingestion (Write)",
+                "id": "79c91e896dae1a305a10a8b9440f9714",
+                "groups": {},
+                "checks": {
+                        "ingestion status is 200": {
+                            "name": "ingestion status is 200",
+                            "path": "::6. Edge Device Observation Ingestion (Write)::ingestion status is 200",
+                            "id": "12c61fcb82ef0193547a021473cf28ad",
+                            "passes": 58,
+                            "fails": 0
+                        },
+                        "accepted count > 0": {
+                            "fails": 0,
+                            "name": "accepted count > 0",
+                            "path": "::6. Edge Device Observation Ingestion (Write)::accepted count > 0",
+                            "id": "ae47196a4a71e774b63bffd192040076",
+                            "passes": 58
+                        }
+                    }
+            }
+        },
+        "checks": {}
+    }
+}
